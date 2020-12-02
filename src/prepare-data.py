@@ -11,7 +11,35 @@ import numpy as np
 
 def get_companies_names():
     metadata_df = pd.read_csv('data/stock_metadata.csv')
-    print(metadata_df)
+    return list(metadata_df['Symbol'])
 
 
-get_companies_names()
+def load_all_stock_data(names):
+    table_df = None
+    for name in names:
+        company_df = pd.read_csv('data/companies/' + name + '.csv')
+        for column in company_df.columns:
+            if column == 'Date' or column == 'VWAP':
+                continue
+            company_df = company_df.drop(column, 1)
+        
+        company_df = company_df.rename(columns={'VWAP':name})
+        
+        if table_df is None:
+            table_df = company_df
+        else:        
+            table_df = table_df.merge(company_df, how='outer', left_on='Date', right_on='Date')
+        
+    table_df = table_df.sort_values(by='Date')
+    table_df = table_df.reset_index(drop=True)
+
+    return table_df        
+
+
+def write_table_df(table_df, path):
+    table_df.to_csv(path, index=False)
+
+
+names = get_companies_names()
+table_df = load_all_stock_data(names)
+write_table_df(table_df, 'data/table.csv')
