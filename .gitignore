@@ -130,3 +130,7 @@ dmypy.json
 
 data/companies
 data/stock_metadata.csv
+
+# Pycharm files
+.idea
+
