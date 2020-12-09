@@ -9,8 +9,8 @@ from visualize import *
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     """
-    tuples: e.g. np.array([[1,2,5,2],[3,2,5,4],[2,2,0,5]])
-        It means: 3 tuples, each of them 4 attributes
+    rows: e.g. np.array([[1,2,5,2],[3,2,5,4],[2,2,0,5]])
+        It means: 3 rows, each of them 4 attributes
         Will be generalized into:
         [(1,3), (2,2), (0,5), (2,5)]
     min_max_diff: e.g. np.array([20,4,10,5])
@@ -39,11 +39,40 @@ def do_kp_anonymity():
     df = reduce_dataframe(df)
     visualize_all_companies(df)
 
-    # uncomment if you want to see the graphs
+    # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
     # plt.show()
 
+    # -----------------------------------------------
+    # examples of usage of group methods
+    # - for the k anonymity, you can use all the methods
+    # - please, check the dimensions and how the group works
+    # - if you don't understand something, just ask me
+    # - (delete the lines that you don't need)
+    # -----------------------------------------------
+    print('---group operations examples---')
     table_group = create_group_from_pandas_df(df)
+    print('table created from out data:', table_group.shape())
     table_min_max_diff = table_group.get_min_max()
+    row = table_group.get_row_at_index(3)
+    print('a row is a vector (numpy array with one dimension)', row.shape)
+    table_group.add_row_to_group(row)
+    print('a row was added to the table', table_group.shape())
+
+    # -----------------------------------------------
+    # example of ncp computing
+    # - will be needed in k anonymity
+    # - (delete this, when you start coding k-anonymity)
+    # -----------------------------------------------
+    print('---ncp computing---')
+    new_table = create_empty_group()
+    print('empty group created:', new_table.shape())
+    row_1 = table_group.get_row_at_index(2)
+    row_2 = table_group.get_row_at_index(3)
+    new_table.add_row_to_group(row_1)
+    new_table.add_row_to_group(row_2)
+    print('new rows added:', new_table.shape())
+    new_table_ncp = compute_ncp(new_table.group_table, min_max_diff=table_min_max_diff)
+    print('ncp computed:', new_table_ncp)
 
 
 if __name__ == "__main__":
