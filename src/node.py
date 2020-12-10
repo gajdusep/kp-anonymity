@@ -1,6 +1,9 @@
 
+from typing import Union, List, Tuple
+import numpy as np
+
 
 class Node:
 
-    def __init__(self, rows):
+    def __init__(self):
         pass

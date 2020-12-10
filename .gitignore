@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+data/companies
+data/stock_metadata.csv
+
+# Pycharm files
+.idea
+
