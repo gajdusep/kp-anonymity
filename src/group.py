@@ -1,6 +1,7 @@
 
 import numpy as np
 import pandas as pd
+import random
 
 from typing import Union, Tuple
 from node import Node
@@ -17,16 +18,35 @@ class Group:
         else:
             self.group_table = np.vstack([self.group_table, row])
 
+    def delete_last_added_row(self):
+        if self.size() > 0:
+            self.group_table = np.delete(self.group_table, -1, axis=0)
+
     def get_row_at_index(self, index: int) -> np.ndarray:
         return self.group_table[index]
 
     def get_random_row(self) -> Tuple[int, np.ndarray]:
-        pass
+        """
+        :return: index of the row, row
+        """
+        i = random.randint(0, self.size() - 1)
+        return i, self.get_row_at_index(i)
 
-    def get_min_max(self) -> np.ndarray:
-        table_maxs = np.max(self.group_table, axis=0)
-        table_mins = np.min(self.group_table, axis=0)
+    def get_maxes(self) -> np.ndarray:
+        return np.max(self.group_table, axis=0)
+
+    def get_mins(self) -> np.ndarray:
+        return np.min(self.group_table, axis=0)
+
+    def get_min_max_diff(self) -> np.ndarray:
+        table_maxs = self.get_maxes()
+        table_mins = self.get_mins()
         return table_maxs - table_mins
+
+    def get_group_intervals(self):
+        table_maxs = self.get_maxes()
+        table_mins = self.get_mins()
+        return list(zip(table_mins, table_maxs))
 
     def size(self):
         if self.group_table is None:
@@ -35,7 +55,7 @@ class Group:
 
     def shape(self) -> Tuple[int, int]:
         if self.group_table is None:
-            return 0,0
+            return 0, 0
         return self.group_table.shape
 
     def to_node(self) -> Node:
