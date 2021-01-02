@@ -134,3 +134,4 @@ data/stock_metadata.csv
 # Pycharm files
 .idea
 
+*.code-workspace

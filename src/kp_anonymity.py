@@ -125,6 +125,45 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
     return k_anonymized_groups
 
+#minimize ncp
+def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
+    group_with_min_ncp = list_of_groups.pop(0)
+    merged_groups = G.append(group_with_min_ncp)
+    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
+
+    for group in list_of_groups:
+        tmp_merged_groups = G.append(group)
+        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
+        if tmp_ncp < min_ncp:
+            min_ncp = tmp_ncp
+            group_with_min_ncp = group
+
+    return group_with_min_ncp        
+
+#k-anonymity bottom-up method
+def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]: 
+    group_for_each_tuple = []
+    total_number_of_tuple = len(group_for_each_tuple)
+
+    #create a group for each tuple
+    for single_tuple in table_group:
+        group_for_each_tuple.append(single_tuple)
+    group_anonymizing = group_for_each_tuple
+
+    #scan all group to find the one that minimizes ncp
+    while len(group_anonymizing) >= total_number_of_tuple/k:
+        for group in group_anonymizing:
+            if group.size < k:
+                #merge the group with min ncp
+                group.append(group_to_be_merged(group, group_anonymizing))
+                
+            if group.size >= k*2:
+                return
+                #split group into two parts   
+
+
+    return group_anonymizing
+
 
 def do_kp_anonymity(path_to_file: str, k: int):
     # load the data from the file
