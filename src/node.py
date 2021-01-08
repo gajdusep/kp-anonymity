@@ -25,7 +25,7 @@ class Node:
         self.members = members
         self.size = len(members)
     
-    def split(self) -> List[Node]:
+    def split(self):
         # Split node N in child nodes with level N.level+1
         child_level = self.level + 1
         child_nodes = {}
@@ -56,7 +56,7 @@ class Node:
             rows.append(row)
         return rows
     
-    def copy(self) -> Node:
+    def copy(self):
         """
         Returns a copy of the node
         """

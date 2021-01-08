@@ -31,7 +31,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
     In the end, the list of processed nodes is returned. Those can then be used to rebuild the table rows.
     """
     # Initialize nodes list with the starting node, corresponding to group
-    nodes_to_process = [create_node_from_group(group, PR_len)]    
+    nodes_to_process = [create_node_from_group(group, PR_len)]
     new_nodes_to_process = True
     good_leaves = []
     bad_leaves = []
@@ -54,7 +54,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                     good_leaves.append(N)
                 # Split possible
                 else:
-                    new_nodes_to_process = False
+                    new_nodes_to_process = True
                     TG_nodes = []
                     TB_nodes = []
                     total_TB_size = 0
@@ -78,16 +78,15 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
         max_similarity = None
         most_similar_good = None
         for good in good_leaves:
-            similairty = pattern_similarity(bad, good)
-            if similairty > max_similarity:
-                max_similarity = similairty
+            similarity = pattern_similarity(bad, good)
+            if similarity > max_similarity:
+                max_similarity = similarity
                 most_similar_good = good
-            elif similairty == max_similarity and good.size < most_similar_good:
+            elif similarity == max_similarity and good.size < most_similar_good:
                 most_similar_good = good
         most_similar_good.members.extend(bad.members)
 
-    processed_nodes = good_leaves
-    return processed_nodes
+    return good_leaves
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     """
