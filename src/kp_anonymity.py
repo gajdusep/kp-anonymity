@@ -75,16 +75,19 @@ def group_partition(G: Group):
 
     (index_u, index_v) = get_init_tuples_uv(G)
     u_max = G.get_row_at_index(index_u)
+    u_max_id = G.get_row_id_at_index(index_u)
     v_max = G.get_row_at_index(index_v)
+    v_max_id = G.get_row_id_at_index(index_v)
 
-    Gu.add_row_to_group(u_max)
-    Gv.add_row_to_group(v_max)
+    Gu.add_row_to_group(u_max, u_max_id)
+    Gv.add_row_to_group(v_max, v_max_id)
 
     for i in random.sample(range(size), size):
         if i == index_u or i == index_v:
             continue
         else: 
             w = G.get_row_at_index(i)
+            w_id = G.get_row_id_at_index(i)
 
             Gu.add_row_to_group(w)
             ncp_Gu = compute_ncp(Gu.group_table, Gu.get_min_max_diff())
@@ -95,9 +98,9 @@ def group_partition(G: Group):
             Gv.delete_last_added_row()
 
             if ncp_Gu < ncp_Gv:
-                Gu.add_row_to_group(w)
+                Gu.add_row_to_group(w, w_id)
             else:
-                Gv.add_row_to_group(w)
+                Gv.add_row_to_group(w, w_id)
 
     return [Gu, Gv]
 
@@ -192,11 +195,12 @@ def do_kp_anonymity(path_to_file: str, k: int):
     print('---group operations examples---')
     table_group = create_group_from_pandas_df(df)
     print('table created from out data:', table_group.shape())
+    print('   --- ', table_group.ids)
     table_min_max_diff = table_group.get_min_max_diff()
 
     anonymized_groups = k_anonymity_top_down(table_group, k)
     for ag in anonymized_groups:
-        print(ag.shape())
+        print('shape:', ag.shape(), '; company codes:', ag.ids)
 
     visualize_intervals(anonymized_groups)
 
