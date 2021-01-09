@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random 
+import math
 
 from group import *
 from node import *
@@ -27,6 +28,19 @@ def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     ncp = np.sum(zy_diff / min_max_diff)
     return rows.shape[0] * ncp
 
+def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
+    group_with_min_ncp = list_of_groups.pop(0)
+    merged_groups = G.append(group_with_min_ncp)
+    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
+
+    for group in list_of_groups:
+        tmp_merged_groups = G.append(group)
+        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
+        if tmp_ncp < min_ncp:
+            min_ncp = tmp_ncp
+            group_with_min_ncp = group
+
+    return group_with_min_ncp        
 
 def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     """
@@ -39,7 +53,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     index_u, u_max = G.get_random_row()
 
     for _ in range(3):
-        max_ncp = 0
+        max_ncp = -math.inf
         for i in range(size):
             v = G.get_row_at_index(i)
             tmp = create_empty_group()
@@ -52,7 +66,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
                 v_max = v
                 index_v = i
 
-        max_ncp = 0
+        max_ncp = -math.inf
         for i in range(size):
             u = G.get_row_at_index(i)
             tmp = create_empty_group()
@@ -119,12 +133,26 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
             if group.size() > k:
                 groups_to_anonymize.append(group)
             else:
-                k_anonymized_groups.append(group)
+                less_or_equal_k_anonymized_groups.append(group)
 
     """
     TODO Gabriele: some of the groups might be smaller than k. There is some merging I think..
     It must be implemented here
     """
+    #postprocessing
+    k_anonymized_groups = []
+    groups_to_anonymize = [less_or_equal_k_anonymized_groups]
+     while len(groups_to_anonymize) > 0:
+         group_to_anonymize = groups_to_anonymize.pop(0)
+         merging_group = group_to_be_merged(group_to_anonymize,groups_to_anonymize)
+         index_of_merging_group = group_to_anonymize.index(merging_group)
+         del groups_to_anonymize[index_of_merging_group]
+         group_to_anonymize.merge_group(merging_group)
+         if group_to_anonymize.size() >= k:
+             k_anonymized_groups.append(group_to_anonymize)
+         else:
+             groups_to_anonymize.append(group_to_anonymize)
+
 
     return k_anonymized_groups
 
@@ -163,92 +191,10 @@ def do_kp_anonymity(path_to_file: str, k: int):
     for ag in anonymized_groups:
         print('shape:', ag.shape(), '; company codes:', ag.ids)
 
-<<<<<<< Updated upstream
+
     visualize_intervals(anonymized_groups)
 
-=======
-<<<<<<< HEAD
-def group_partition(G: Group):
-    size = G.size()
-    Gu = create_empty_group()
-    Gv = create_empty_group()
-    u_max = G.get_random_row() 
-    
-    for i in range(3):
-        max_ncp = 0
-        for i in range(size):
-            v = G.get_row_at_index_(i)
-            tmp = create_empty_group()
-            tmp.add_row_to_group(u_max)
-            tmp.add_row_to_group(v)
-            tmp_min_max_diff = tmp.get_min_max()
-            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
-            if ncp>max_ncp:
-                max_ncp = ncp
-                v_max = v
-                index_v = i
-   
-        max_ncp = 0
-        for i in range(size):
-            u = G.get_row_at_index_(i)
-            tmp = create_empty_group()
-            tmp.add_row_to_group(v_max)
-            tmp.add_row_to_group(u)
-            tmp_min_max_diff = tmp.get_min_max()
-            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
-            if ncp > max_ncp:
-                max_ncp = ncp
-                u_max = u
-                index_u = i
 
-    Gu.add_row_to_group(u_max)
-    Gv.add_row_to_group(v_max)
-
-    for i in random.sample(range(size), size):
-        if i == index_u or i == index_v:
-            continue
-        else: 
-            w = G.get_row_at_index(i)
-
-            tmp_Gu = Gu
-            tmp_Gu.add_row_to_group(w)
-            tmp_Gu_min_max_diff = tmp_Gu.get_min_max()
-            ncp_Gu = compute_ncp(tmp_Gu.group_table, tmp_Gu_min_max_diff)
-
-            tmp_Gv = Gv
-            tmp_Gv.add_row_to_group(w)
-            tmp_Gv_min_max_diff = tmp_Gv.get_min_max()
-            ncp_Gv = compute_ncp(tmp_Gv.group_table, tmp_Gv_min_max_diff)
-
-            if ncp_Gu < ncp_Gv:
-                Gu.add_row_to_group(w)
-            else:
-                Gv.add_row_to_group(w)
-
-    group_list = [Gu,Gv]
-    return group_list 
-
-         
-    
-
-def k_anonymity_top_down(table_group: Group,k: int):
-        if table_group.size()<= k:
-            return 
-        else:
-            group_list = group_partition(table_group)
-            is_anonymized = False         
-            while (!is_anonymized):
-                is_anonymized = True
-                for i in group_list:
-                    tmp_list = []
-                    if group_list[i].size > k:
-                        tmp_list.extend(group_partition(group_list[i]))
-                        is_anonymized = False
-                    else:
-                        tmp_list.append(group_list[i]) 
-                group_list = tmp_list
-            return group_list       
-               
 
 
 
@@ -269,10 +215,8 @@ def k_anonymity_top_down(table_group: Group,k: int):
     print('new rows added:', new_table.shape())
     new_table_ncp = compute_ncp(new_table.group_table, min_max_diff=table_min_max_diff)
     print('ncp computed:', new_table_ncp)
-=======
     visualize_intervals(anonymized_groups)
 
->>>>>>> Stashed changes
     # row = table_group.get_row_at_index(3)
     # print('a row is a vector (numpy array with one dimension)', row.shape)
     # print('   - last row:', table_group.get_row_at_index(table_group.size() - 1))
@@ -282,10 +226,7 @@ def k_anonymity_top_down(table_group: Group,k: int):
     # table_group.delete_last_added_row()
     # print('a row was deleted from the table', table_group.shape())
     # print('   - last row:', table_group.get_row_at_index(table_group.size() - 1))
-<<<<<<< Updated upstream
-=======
->>>>>>> 9ff2afe22462085d5bc89e44452a6606f5a37449
->>>>>>> Stashed changes
+
 
 
 if __name__ == "__main__":

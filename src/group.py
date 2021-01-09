@@ -25,6 +25,14 @@ class Group:
             self.ids.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
 
+    def merge_group(self, group: 'Group'):
+        """
+        Adds the group to merge to this group.
+        :param group: group that you want to merge
+        """
+        self.group_table = np.concatenate((self.group_table, group.group_table), axis=0)
+
+
     def get_row_at_index(self, index: int) -> np.ndarray:
         return self.group_table[index]
 
