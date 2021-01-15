@@ -8,18 +8,25 @@ from node import *
 from load_data import *
 from visualize import *
 
-def pattern_similarity(N1, N2):
+def compute_pattern_similarity(N1: Node, N2: Node):
     """
     Calculate the similairty between two pattern representations as a value between 0 and 1.
     The difference is here defined as the average of the normalized distances (normalized over the number of levels) between the two characters in the same position of the two PRs.
     The similarity is 1 - difference.
     """
-    diff = None
+    diff = 0
     if N1.level == N2.level:
         for i in range(len(N1.PR)):
             diff += abs(ord(N1.PR[i]) - ord(N2.PR[i])) / N1.level
         diff = diff / len(N1.PR)
         return 1 - diff
+    else:
+        # if the two PRs are of different levels, their values are normalized separately
+        for i in range(len(N1.PR)):
+            diff += abs((ord(N1.PR[i]) - 97) / (N1.level - 1) - (ord(N2.PR[i]) - 97) / (N2.level - 1))
+        diff = diff / len(N1.PR)
+        return 1 - diff
+
 
 def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
     """
@@ -79,8 +86,8 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
         max_similarity = None
         most_similar_good = None
         for good in good_leaves:
-            similarity = pattern_similarity(bad, good)
-            if similarity > max_similarity:
+            similarity = compute_pattern_similarity(bad, good)
+            if max_similarity is None or similarity > max_similarity:
                 max_similarity = similarity
                 most_similar_good = good
             elif similarity == max_similarity and good.size() < most_similar_good:
