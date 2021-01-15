@@ -40,17 +40,18 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
     while new_nodes_to_process:
         new_nodes_to_process = False
         for N in nodes_to_process:
-            if N.size < p:
+            N_size = N.size()
+            if N_size < p:
                 bad_leaves.append(N)
             elif N.level == max_level:
                 good_leaves.append(N)
-            elif N.size < 2*p:
+            elif N_size < 2*p:
                 good_leaves.append(N)
                 N.maximize_level(max_level)
             else:
                 child_nodes = N.split()
                 # Split not possible
-                if len(child_nodes) < 2 or max(child.size for child in child_nodes) < p:
+                if len(child_nodes) < 2 or max(child.size() for child in child_nodes) < p:
                     good_leaves.append(N)
                 # Split possible
                 else:
@@ -59,9 +60,9 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                     TB_nodes = []
                     total_TB_size = 0
                     for child in child_nodes:
-                        if child.size < p:
+                        if child.size() < p:
                             TB_nodes.append(child)
-                            total_TB_size += child.size
+                            total_TB_size += child.size()
                         else:
                             TG_nodes.append(child)
                     
@@ -71,9 +72,9 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                         child_merge = merge_nodes(TB_nodes)
                         nodes_to_process.append(child_merge)
                     else:
-                        nodes_to_process.append(TB_nodes)
+                        nodes_to_process.extend(TB_nodes)
     
-    bad_leaves.sort(key = lambda node: node.size)
+    bad_leaves.sort(key = lambda node: node.size())
     for bad in bad_leaves:
         max_similarity = None
         most_similar_good = None
@@ -82,7 +83,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
             if similarity > max_similarity:
                 max_similarity = similarity
                 most_similar_good = good
-            elif similarity == max_similarity and good.size < most_similar_good:
+            elif similarity == max_similarity and good.size() < most_similar_good:
                 most_similar_good = good
         most_similar_good.members.extend(bad.members)
 
