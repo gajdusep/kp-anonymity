@@ -126,7 +126,8 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
         return [table_group]
 
     groups_to_anonymize = [table_group]
-    less_or_equal_k_anonymized_groups = []
+    less_than_k_anonymized_groups = []
+    k_anonymized_groups = []
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
@@ -134,12 +135,13 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
         for group in group_list:
             if group.size() > k:
                 groups_to_anonymize.append(group)
+            elif group.size() = k:
+                k_anonymized_groups.append(group)
             else:
-                less_or_equal_k_anonymized_groups.append(group)
+                less_than_k_anonymized_groups(group)
 
     # postprocessing
-    k_anonymized_groups = []
-    groups_to_anonymize = less_or_equal_k_anonymized_groups
+    groups_to_anonymize = less_than_k_anonymized_groups
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
         merging_group = group_to_be_merged(group_to_anonymize, groups_to_anonymize)
