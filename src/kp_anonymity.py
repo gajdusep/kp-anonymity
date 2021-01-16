@@ -86,6 +86,8 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
 
 def group_partition(G: Group):
     size = G.size()
+    if size <= k:
+        return [G]
     Gu = create_empty_group()
     Gv = create_empty_group()
 
