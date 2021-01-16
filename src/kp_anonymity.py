@@ -1,10 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random 
+import math
 
 from group import *
 from node import *
 from load_data import *
 from visualize import *
+
+from typing import List
 
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
@@ -25,9 +29,138 @@ def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     return rows.shape[0] * ncp
 
 
-def do_kp_anonymity():
+def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
+    group_with_min_ncp = list_of_groups.pop(0)
+    merged_groups = G.append(group_with_min_ncp)
+    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
+
+    for group in list_of_groups:
+        tmp_merged_groups = G.append(group)
+        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
+        if tmp_ncp < min_ncp:
+            min_ncp = tmp_ncp
+            group_with_min_ncp = group
+
+    return group_with_min_ncp        
+
+
+def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
+    """
+    Returns the best rows to start the k-anonymity with
+    :param G: Group to search
+    :return: indexes of best u,v
+    """
+
+    size = G.size()
+    index_u, u_max = G.get_random_row()
+
+    for _ in range(3):
+        max_ncp = -math.inf
+        for i in range(size):
+            v = G.get_row_at_index(i)
+            tmp = create_empty_group()
+            tmp.add_row_to_group(u_max)
+            tmp.add_row_to_group(v)
+            tmp_min_max_diff = tmp.get_min_max_diff()
+            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
+            if ncp > max_ncp:
+                max_ncp = ncp
+                v_max = v
+                index_v = i
+
+        max_ncp = -math.inf
+        for i in range(size):
+            u = G.get_row_at_index(i)
+            tmp = create_empty_group()
+            tmp.add_row_to_group(v_max)
+            tmp.add_row_to_group(u)
+            tmp_min_max_diff = tmp.get_min_max_diff()
+            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
+            if ncp > max_ncp:
+                max_ncp = ncp
+                u_max = u
+                index_u = i
+
+    return index_u, index_v
+
+
+def group_partition(G: Group):
+    size = G.size()
+    if size <= k:
+        return [G]
+    Gu = create_empty_group()
+    Gv = create_empty_group()
+
+    (index_u, index_v) = get_init_tuples_uv(G)
+    u_max = G.get_row_at_index(index_u)
+    u_max_id = G.get_row_id_at_index(index_u)
+    v_max = G.get_row_at_index(index_v)
+    v_max_id = G.get_row_id_at_index(index_v)
+
+    Gu.add_row_to_group(u_max, u_max_id)
+    Gv.add_row_to_group(v_max, v_max_id)
+
+    for i in random.sample(range(size), size):
+        if i == index_u or i == index_v:
+            continue
+        else: 
+            w = G.get_row_at_index(i)
+            w_id = G.get_row_id_at_index(i)
+
+            Gu.add_row_to_group(w)
+            ncp_Gu = compute_ncp(Gu.group_table, Gu.get_min_max_diff())
+            Gu.delete_last_added_row()
+
+            Gv.add_row_to_group(w)
+            ncp_Gv = compute_ncp(Gv.group_table, Gv.get_min_max_diff())
+            Gv.delete_last_added_row()
+
+            if ncp_Gu < ncp_Gv:
+                Gu.add_row_to_group(w, w_id)
+            else:
+                Gv.add_row_to_group(w, w_id)
+
+    return [Gu, Gv]
+
+
+def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
+    if table_group.size() <= k:
+        return [table_group]
+
+    groups_to_anonymize = [table_group]
+    less_than_k_anonymized_groups = []
+    k_anonymized_groups = []
+
+    while len(groups_to_anonymize) > 0:
+        group_to_anonymize = groups_to_anonymize.pop(0)
+        group_list = group_partition(group_to_anonymize)
+        for group in group_list:
+            if group.size() > k:
+                groups_to_anonymize.append(group)
+            elif group.size() = k:
+                k_anonymized_groups.append(group)
+            else:
+                less_than_k_anonymized_groups(group)
+
+    # postprocessing
+    groups_to_anonymize = less_than_k_anonymized_groups
+    while len(groups_to_anonymize) > 0:
+        group_to_anonymize = groups_to_anonymize.pop(0)
+        merging_group = group_to_be_merged(group_to_anonymize, groups_to_anonymize)
+        index_of_merging_group = group_to_anonymize.index(merging_group)
+        del groups_to_anonymize[index_of_merging_group]
+        group_to_anonymize.merge_group(merging_group)
+        if group_to_anonymize.size() >= k:
+            k_anonymized_groups.append(group_to_anonymize)
+        else:
+            groups_to_anonymize.append(group_to_anonymize)
+
+    return k_anonymized_groups
+
+
+def do_kp_anonymity(path_to_file: str, k: int):
     # load the data from the file
-    df = load_data_from_file('data/table.csv')
+    df = load_data_from_file(path_to_file)
 
     # do some preprocessing with the data
     df = remove_rows_with_nan(df)
@@ -40,40 +173,19 @@ def do_kp_anonymity():
     visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    # plt.show()
+    plt.show()
 
-    # -----------------------------------------------
-    # examples of usage of group methods
-    # - for the k anonymity, you can use all the methods
-    # - please, check the dimensions and how the group works
-    # - if you don't understand something, just ask me
-    # - (delete the lines that you don't need)
-    # -----------------------------------------------
-    print('---group operations examples---')
     table_group = create_group_from_pandas_df(df)
     print('table created from out data:', table_group.shape())
-    table_min_max_diff = table_group.get_min_max()
-    row = table_group.get_row_at_index(3)
-    print('a row is a vector (numpy array with one dimension)', row.shape)
-    table_group.add_row_to_group(row)
-    print('a row was added to the table', table_group.shape())
+    print('   --- ', table_group.ids)
+    table_min_max_diff = table_group.get_min_max_diff()
 
-    # -----------------------------------------------
-    # example of ncp computing
-    # - will be needed in k anonymity
-    # - (delete this, when you start coding k-anonymity)
-    # -----------------------------------------------
-    print('---ncp computing---')
-    new_table = create_empty_group()
-    print('empty group created:', new_table.shape())
-    row_1 = table_group.get_row_at_index(2)
-    row_2 = table_group.get_row_at_index(3)
-    new_table.add_row_to_group(row_1)
-    new_table.add_row_to_group(row_2)
-    print('new rows added:', new_table.shape())
-    new_table_ncp = compute_ncp(new_table.group_table, min_max_diff=table_min_max_diff)
-    print('ncp computed:', new_table_ncp)
+    anonymized_groups = k_anonymity_top_down(table_group, k)
+    for ag in anonymized_groups:
+        print('shape:', ag.shape(), '; company codes:', ag.ids)
+
+    visualize_intervals(anonymized_groups)
 
 
 if __name__ == "__main__":
-    do_kp_anonymity()
+    do_kp_anonymity(path_to_file='data/table.csv', k=3)
