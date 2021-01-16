@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random 
+import copy
 
 from group import *
 from node import *
@@ -129,7 +130,7 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
     return k_anonymized_groups
 
 #minimize ncp
-def find_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
+def find_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group: #index
     group_with_min_ncp = list_of_groups[0]
     merged_groups = create_empty_group()
     merged_groups = G.merge_group(group_with_min_ncp)
@@ -156,23 +157,22 @@ def find_smallest_group(list_of_groups: List[Group]) -> Group:
     return smallest_group             
 
 #k-anonymity bottom-up method
-def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
-    group_with_single_tuple = create_empty_group()
+def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:    
     list_of_groups = []
     i = 0
     updated_list_of_groups = []
     
 
     #create a group for each tuple
-    while i < table_group.size():
-        
+    for i in  range(table_group.size()):
+        group_with_single_tuple = create_empty_group()
         row = table_group.get_row_at_index(i)
         print('row to be added: ',row)
         group_with_single_tuple.add_row_to_group(row)
         list_of_groups.append(group_with_single_tuple)
-        print('step:',i,'Creating a group for each tuple: ', group_with_single_tuple.group_table) 
-        i += 1
+        print('Creating a group for each tuple: ', group_with_single_tuple.group_table) 
         
+    updated_list_of_groups = copy.deepcopy(list_of_groups)  
 
     #print('size of smallest group', find_smallest_group(list_of_groups).size())
     #do k-anonymity on groups
@@ -183,12 +183,12 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
             if group.size() < k:
                 #merge the group with min ncp
                 print('merging groups with min ncp')
-                updated_list_of_groups = list_of_groups.copy()
+                
                 current_group = updated_list_of_groups.pop(updated_list_of_groups.index(group))
-                merged_groups = current_group.merge_group(find_group_to_be_merged(current_group, list_of_groups))
-                updated_list_of_groups.append(merged_groups)
+                current_group.merge_group(find_group_to_be_merged(current_group, list_of_groups))
+                
                                
-            if group.size >= k*2:
+            if group.size() >= k*2:
                 #split group into two parts 
                 print('splitting group with dim > 2k')               
                 new_group = create_empty_group()
@@ -199,7 +199,7 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
                     updated_list_of_groups.append(new_group)
                     i += 1
 
-    return list_of_groups
+    return updated_list_of_groups
 
 
 def do_kp_anonymity(path_to_file: str, k: int):
