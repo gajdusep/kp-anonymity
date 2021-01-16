@@ -31,7 +31,19 @@ class Group:
         :param group: group that you want to merge
         """
         self.group_table = np.concatenate((self.group_table, group.group_table), axis=0)
+        self.ids.extend(group.ids)
 
+    @staticmethod
+    def merge_two_groups(group1: 'Group', group2: 'Group') -> 'Group':
+        """
+        Merges two Groups into a new Group
+        :param group1: first group
+        :param group2: second group
+        :return: merged group
+        """
+        new_group = Group(group1.group_table, group1.ids)
+        new_group.merge_group(group2)
+        return new_group
 
     def get_row_at_index(self, index: int) -> np.ndarray:
         return self.group_table[index]

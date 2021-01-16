@@ -84,7 +84,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     return index_u, index_v
 
 
-def group_partition(G: Group):
+def group_partition(G: Group, k: int):
     size = G.size()
     if size <= k:
         return [G]
@@ -133,15 +133,16 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
-        group_list = group_partition(group_to_anonymize)
+        group_list = group_partition(group_to_anonymize, k)
         for group in group_list:
             if group.size() > k:
                 groups_to_anonymize.append(group)
-            elif group.size() = k:
+            elif group.size() == k:
                 k_anonymized_groups.append(group)
             else:
-                less_than_k_anonymized_groups(group)
+                less_than_k_anonymized_groups.append(group)
 
+    """
     # postprocessing
     groups_to_anonymize = less_than_k_anonymized_groups
     while len(groups_to_anonymize) > 0:
@@ -154,6 +155,7 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
             k_anonymized_groups.append(group_to_anonymize)
         else:
             groups_to_anonymize.append(group_to_anonymize)
+    """
 
     return k_anonymized_groups
 
@@ -173,7 +175,7 @@ def do_kp_anonymity(path_to_file: str, k: int):
     visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    plt.show()
+    # plt.show()
 
     table_group = create_group_from_pandas_df(df)
     print('table created from out data:', table_group.shape())
