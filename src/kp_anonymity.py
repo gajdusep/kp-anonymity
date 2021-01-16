@@ -130,42 +130,76 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
 #minimize ncp
 def find_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
-    group_with_min_ncp = list_of_groups.pop(0)
-    merged_groups = G.append(group_with_min_ncp)
-    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
+    group_with_min_ncp = list_of_groups[0]
+    merged_groups = create_empty_group()
+    merged_groups = G.merge_group(group_with_min_ncp)
+    min_ncp = compute_ncp(merged_groups.group_table, merged_groups.get_min_max_diff())
 
     for group in list_of_groups:
-        tmp_merged_groups = G.append(group)
-        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
+        tmp_merged_groups = G.merge_group(group)
+        tmp_ncp = compute_ncp(tmp_merged_groups.group_table, tmp_merged_groups.get_min_max_diff())
         if tmp_ncp < min_ncp:
             min_ncp = tmp_ncp
-            group_with_min_ncp = group
+            group_with_min_ncp = group.copy()
 
-    return group_with_min_ncp        
+    return group_with_min_ncp   
+
+#find the smallest group among those in list
+def find_smallest_group(list_of_groups: List[Group]) -> Group:
+    smallest_group = list_of_groups[0]
+    #print(smallest_group.group_table)
+    for group in list_of_groups:
+        size_of_current_group = group.size()
+        size_of_smallest_group = smallest_group.size()
+        if size_of_current_group < size_of_smallest_group:
+            smallest_group = group.copy()
+    return smallest_group             
 
 #k-anonymity bottom-up method
-def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]: 
-    group_for_each_tuple = []
-    total_number_of_tuple = len(group_for_each_tuple)
+def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
+    group_with_single_tuple = create_empty_group()
+    list_of_groups = []
+    i = 0
+    updated_list_of_groups = []
+    
 
     #create a group for each tuple
-    for single_tuple in table_group:
-        group_for_each_tuple.append(single_tuple)
-    group_anonymizing = group_for_each_tuple #
+    while i < table_group.size():
+        
+        row = table_group.get_row_at_index(i)
+        print('row to be added: ',row)
+        group_with_single_tuple.add_row_to_group(row)
+        list_of_groups.append(group_with_single_tuple)
+        print('step:',i,'Creating a group for each tuple: ', group_with_single_tuple.group_table) 
+        i += 1
+        
 
-    #scan all group to find the one that minimizes ncp
-    while len(group_anonymizing) >= total_number_of_tuple/k: #
-        for group in group_anonymizing:
-            if group.size < k:
+    #print('size of smallest group', find_smallest_group(list_of_groups).size())
+    #do k-anonymity on groups
+    while find_smallest_group(list_of_groups).size() < k:
+        #print('size of smallest group', find_smallest_group(list_of_groups).size()) 
+    
+        for group in list_of_groups:
+            if group.size() < k:
                 #merge the group with min ncp
-                group.append(find_group_to_be_merged(group, group_anonymizing)) 
-                
+                print('merging groups with min ncp')
+                updated_list_of_groups = list_of_groups.copy()
+                current_group = updated_list_of_groups.pop(updated_list_of_groups.index(group))
+                merged_groups = current_group.merge_group(find_group_to_be_merged(current_group, list_of_groups))
+                updated_list_of_groups.append(merged_groups)
+                               
             if group.size >= k*2:
-                return
-                #split group into two parts   
+                #split group into two parts 
+                print('splitting group with dim > 2k')               
+                new_group = create_empty_group()
+                i = 0
+                while i < k:
+                    row_to_separate = group.pop(i)
+                    new_group.add_row_to_group(row_to_separate)
+                    updated_list_of_groups.append(new_group)
+                    i += 1
 
-
-    return group_anonymizing
+    return list_of_groups
 
 
 def do_kp_anonymity(path_to_file: str, k: int):
@@ -196,16 +230,24 @@ def do_kp_anonymity(path_to_file: str, k: int):
     table_group = create_group_from_pandas_df(df)
     print('table created from out data:', table_group.shape())
     print('   --- ', table_group.ids)
-    table_min_max_diff = table_group.get_min_max_diff()
+    #table_min_max_diff = table_group.get_min_max_diff()
 
-    anonymized_groups = k_anonymity_top_down(table_group, k)
+    #anonymized_groups = k_anonymity_top_down(table_group, k)
+    anonymized_groups = k_anonymity_bottom_up(table_group, k)
+
+    print(len(anonymized_groups))
+
+  
+      
+    
     for ag in anonymized_groups:
         print('shape:', ag.shape(), '; company codes:', ag.ids)
 
     visualize_intervals(anonymized_groups)
 
-    # row = table_group.get_row_at_index(3)
-    # print('a row is a vector (numpy array with one dimension)', row.shape)
+    #row = table_group.get_row_at_index(3)
+    #print('a row is a vector (numpy array with one dimension)', row.shape)
+    #print(row)
     # print('   - last row:', table_group.get_row_at_index(table_group.size() - 1))
     # table_group.add_row_to_group(row)
     # print('a row was added to the table', table_group.shape())
@@ -213,6 +255,9 @@ def do_kp_anonymity(path_to_file: str, k: int):
     # table_group.delete_last_added_row()
     # print('a row was deleted from the table', table_group.shape())
     # print('   - last row:', table_group.get_row_at_index(table_group.size() - 1))
+
+    
+    
 
 
 if __name__ == "__main__":
