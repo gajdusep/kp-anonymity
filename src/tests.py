@@ -39,18 +39,21 @@ def test_p_anonymity_naive():
         [1, 10, 5, 6, -8]
     ])
 
-    group = Group(group_table)
+    ids = ["A", "B", "C", "D", "E", "F", "G"]
+
+    group = Group(group_table, ids)
     for i, row in enumerate(group.group_table):
-        print(str(i) + ": " + str(row))
+        print(ids[i] + ": " + str(row))
 
     # p-anonymity
     leaves = kp_anonymity.p_anonimity_naive(group, 2, 5, 0)
 
     # print output
     for leave in leaves:
-        print(leave.PR)
+        print()
+        print(leave.PR + " members:")
         for i in leave.members:
-            print(i)
+            print(group.get_row_id_at_index(i))
 
     return
 
