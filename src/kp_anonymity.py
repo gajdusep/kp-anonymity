@@ -8,7 +8,7 @@ from node import *
 from load_data import *
 from visualize import *
 
-def compute_pattern_similarity(N1: Node, N2: Node):
+def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     """
     Calculate the similairty between two pattern representations as a value between 0 and 1.
     The difference is here defined as the average of the normalized distances (normalized over the number of levels) between the two characters in the same position of the two PRs.
@@ -40,8 +40,8 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
     # Initialize nodes list with the starting node, corresponding to group
     nodes_to_process = [create_node_from_group(group, PR_len)]
     new_nodes_to_process = True
-    good_leaves = []
-    bad_leaves = []
+    good_leaves: List[Node] = []
+    bad_leaves: List[Node] = []
 
     # Node splitting
     while new_nodes_to_process:
@@ -63,8 +63,8 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                 # Split possible
                 else:
                     new_nodes_to_process = True
-                    TG_nodes = []
-                    TB_nodes = []
+                    TG_nodes: List[Node] = []
+                    TB_nodes: List[Node] = []
                     total_TB_size = 0
                     for child in child_nodes:
                         if child.size() < p:

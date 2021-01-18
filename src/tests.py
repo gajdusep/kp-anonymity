@@ -20,6 +20,7 @@ def test_compute_pattern_similarity():
 
 def test_p_anonymity_naive():
     # create and print test group
+    """
     group_table = np.array([
         [0, 1, 2, 3, 4],
         [-5, -3, -2, 0, 1],
@@ -27,6 +28,17 @@ def test_p_anonymity_naive():
         [10, 8, 9, 1, 3],
         [1, 5, 6, 2, -4]
     ])
+    """
+    group_table = np.array([
+        [0, 1, 2, 3, 4],
+        [-5, -3, -2, 0, 1],
+        [-1, -3, -2, -10, -8],
+        [10, 8, 9, 1, 3],
+        [1, 5, 6, 2, -4],
+        [10, 1, 3, -6, 0],
+        [1, 10, 5, 6, -8]
+    ])
+
     group = Group(group_table)
     for i, row in enumerate(group.group_table):
         print(str(i) + ": " + str(row))
