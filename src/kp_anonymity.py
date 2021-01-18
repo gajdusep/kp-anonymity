@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random 
 import math
+import sys
+import argparse
 
 from group import *
 from node import *
@@ -190,4 +192,22 @@ def do_kp_anonymity(path_to_file: str, k: int):
 
 
 if __name__ == "__main__":
+    algorithms = ['classic', 'kapra']
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-k', '--k-anonymity', required=True, type=int)
+    parser.add_argument('-p', '--p-anonymity', required=True, type=int)
+    parser.add_argument('-a', '--algorithm', required=False, default=algorithms[0])
+    parser.add_argument('-i', '--input-file', required=False)
+    parser.add_argument('-o', '--output-file', required=False)
+    args = vars(parser.parse_args())
+
+    k = args['k_anonymity']
+    p = args['p_anonymity']
+    algorithm = args['algorithm']
+    input_path = args['input_file']
+    output_path = args['output_file']
+
+    print(k, p, algorithm, input_path, output_path)
+
     do_kp_anonymity(path_to_file='data/table.csv', k=3)
