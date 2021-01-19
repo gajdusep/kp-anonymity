@@ -55,7 +55,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     index_u, u_max = G.get_random_row()
 
     for _ in range(3):
-        max_ncp = -math.inf
+        max_ncp = None
         for i in range(size):
             v = G.get_row_at_index(i)
             tmp = create_empty_group()
@@ -63,12 +63,12 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
             tmp.add_row_to_group(v)
             tmp_min_max_diff = tmp.get_min_max_diff()
             ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
-            if ncp > max_ncp:
+            if max_ncp == None or ncp > max_ncp:
                 max_ncp = ncp
                 v_max = v
                 index_v = i
 
-        max_ncp = -math.inf
+        max_ncp = None
         for i in range(size):
             u = G.get_row_at_index(i)
             tmp = create_empty_group()
@@ -76,7 +76,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
             tmp.add_row_to_group(u)
             tmp_min_max_diff = tmp.get_min_max_diff()
             ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
-            if ncp > max_ncp:
+            if max_ncp == None or ncp > max_ncp:
                 max_ncp = ncp
                 u_max = u
                 index_u = i
