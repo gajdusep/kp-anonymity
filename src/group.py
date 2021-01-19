@@ -2,9 +2,7 @@
 import numpy as np
 import pandas as pd
 import random
-
 from typing import Union, Tuple, List
-from node import Node
 
 
 class Group:
@@ -31,7 +29,19 @@ class Group:
         :param group: group that you want to merge
         """
         self.group_table = np.concatenate((self.group_table, group.group_table), axis=0)
+        self.ids.extend(group.ids)
 
+    @staticmethod
+    def merge_two_groups(group1: 'Group', group2: 'Group') -> 'Group':
+        """
+        Merges two Groups into a new Group
+        :param group1: first group
+        :param group2: second group
+        :return: merged group
+        """
+        new_group = Group(group1.group_table, group1.ids)
+        new_group.merge_group(group2)
+        return new_group
 
     def get_row_at_index(self, index: int) -> np.ndarray:
         return self.group_table[index]
@@ -72,9 +82,10 @@ class Group:
             return 0, 0
         return self.group_table.shape
 
-    def to_node(self) -> Node:
-        # TODO: this Method should be implemented by Mattia, when he has the Node implementation
-        pass
+    # This is not needed anymore: Node has a function which creates a Node from a Group: create_node_from_group()
+    #def to_node(self) -> Node:
+        # this Method should be implemented by Mattia, when he has the Node implementation
+    #    pass
 
 
 def create_empty_group() -> Group:

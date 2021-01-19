@@ -1,15 +1,104 @@
+from typing import List, Tuple
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import random 
 import math
+import sys
+import argparse
 
 from group import *
 from node import *
 from load_data import *
 from visualize import *
 
-from typing import List
+def compute_pattern_similarity(N1: Node, N2: Node) -> float:
+    """
+    Calculate the similairty between two pattern representations as a value between 0 and 1.
+    The difference is here defined as the average of the normalized distances (normalized over the number of levels) between the two characters in the same position of the two PRs.
+    The similarity is 1 - difference.
+    """
+    diff = 0
+    if N1.level == N2.level:
+        for i in range(len(N1.PR)):
+            diff += abs(ord(N1.PR[i]) - ord(N2.PR[i])) / N1.level
+        diff = diff / len(N1.PR)
+        return 1 - diff
+    else:
+        # if the two PRs are of different levels, their values are normalized separately
+        for i in range(len(N1.PR)):
+            diff += abs((ord(N1.PR[i]) - 97) / (N1.level - 1) - (ord(N2.PR[i]) - 97) / (N2.level - 1))
+        diff = diff / len(N1.PR)
+        return 1 - diff
 
+
+def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
+    """
+    The algorithm is implemented in a non-recursive way because keeping the entire tree structure is not needed as we only use the leaf nodes.
+    The nodes_to_process is the list of nodes which have not already been processed.
+    As nodes are labeled as good or bad leaves, they are added to the good_leaves or bad_leaves lists, respectively.
+    The new_nodes_to_process flag indicates wether during the current cycle are new nodes are created by splits.
+    If there are new nodes, the nodes_to_process list is updated and those new nodes are processed.
+    In the end, the list of processed nodes is returned. Those can then be used to rebuild the table rows.
+    """
+    # Initialize nodes list with the starting node, corresponding to group
+    nodes_to_process = [create_node_from_group(group, PR_len)]
+    new_nodes_to_process = True
+    good_leaves: List[Node] = []
+    bad_leaves: List[Node] = []
+
+    # Node splitting
+    while new_nodes_to_process:
+        new_nodes_to_process = False
+        for N in nodes_to_process:
+            N_size = N.size()
+            if N_size < p:
+                bad_leaves.append(N)
+            elif N.level == max_level:
+                good_leaves.append(N)
+            elif N_size < 2*p:
+                good_leaves.append(N)
+                N.maximize_level(max_level)
+            else:
+                child_nodes = N.split()
+                # Split not possible
+                if len(child_nodes) < 2 or max(child.size() for child in child_nodes) < p:
+                    good_leaves.append(N)
+                # Split possible
+                else:
+                    new_nodes_to_process = True
+                    TG_nodes: List[Node] = []
+                    TB_nodes: List[Node] = []
+                    total_TB_size = 0
+                    for child in child_nodes:
+                        if child.size() < p:
+                            TB_nodes.append(child)
+                            total_TB_size += child.size()
+                        else:
+                            TG_nodes.append(child)
+                    
+                    nodes_to_process = TG_nodes
+
+                    if total_TB_size >= p:
+                        child_merge = merge_nodes(TB_nodes)
+                        nodes_to_process.append(child_merge)
+                    else:
+                        nodes_to_process.extend(TB_nodes)
+    
+    bad_leaves.sort(key = lambda node: node.size())
+    for bad in bad_leaves:
+        max_similarity = None
+        most_similar_good = None
+        for good in good_leaves:
+            similarity = compute_pattern_similarity(bad, good)
+            if max_similarity is None or similarity > max_similarity:
+                max_similarity = similarity
+                most_similar_good = good
+            elif similarity == max_similarity and good.size() < most_similar_good:
+                most_similar_good = good
+        most_similar_good.members.extend(bad.members)
+
+    return good_leaves
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     """
@@ -84,7 +173,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     return index_u, index_v
 
 
-def group_partition(G: Group):
+def group_partition(G: Group, k: int):
     size = G.size()
     if size <= k:
         return [G]
@@ -133,15 +222,25 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
-        group_list = group_partition(group_to_anonymize)
+        group_list = group_partition(group_to_anonymize, k)
+        both_have_less = True
         for group in group_list:
             if group.size() > k:
-                groups_to_anonymize.append(group)
-            elif group.size() = k:
-                k_anonymized_groups.append(group)
-            else:
-                less_than_k_anonymized_groups(group)
+                both_have_less = False
+        if not both_have_less:
+            for group in group_list:
+                if group.size() > k:
+                    groups_to_anonymize.append(group)
+                elif group.size() == k:
+                    k_anonymized_groups.append(group)
+                else:
+                    less_than_k_anonymized_groups.append(group)
+        else:
+            k_anonymized_groups.append(group_to_anonymize)
 
+    for ag in less_than_k_anonymized_groups:
+        print('shape:', ag.shape(), '; company codes:', ag.ids)
+    """
     # postprocessing
     groups_to_anonymize = less_than_k_anonymized_groups
     while len(groups_to_anonymize) > 0:
@@ -154,6 +253,7 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
             k_anonymized_groups.append(group_to_anonymize)
         else:
             groups_to_anonymize.append(group_to_anonymize)
+    """
 
     return k_anonymized_groups
 
@@ -169,11 +269,11 @@ def do_kp_anonymity(path_to_file: str, k: int):
     visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
-    df = reduce_dataframe(df)
+    df = reduce_dataframe(df, companies_count=20)
     visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    plt.show()
+    # plt.show()
 
     table_group = create_group_from_pandas_df(df)
     print('table created from out data:', table_group.shape())
@@ -188,4 +288,23 @@ def do_kp_anonymity(path_to_file: str, k: int):
 
 
 if __name__ == "__main__":
-    do_kp_anonymity(path_to_file='data/table.csv', k=3)
+    algorithms = ['classic', 'kapra']
+    # TODO: add parameter - visualize graphs?
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-k', '--k-anonymity', required=True, type=int)
+    parser.add_argument('-p', '--p-anonymity', required=True, type=int)
+    parser.add_argument('-a', '--algorithm', required=False, default=algorithms[0])
+    parser.add_argument('-i', '--input-file', required=False)
+    parser.add_argument('-o', '--output-file', required=False)
+    args = vars(parser.parse_args())
+
+    k = args['k_anonymity']
+    p = args['p_anonymity']
+    algorithm = args['algorithm']
+    input_path = args['input_file']
+    output_path = args['output_file']
+
+    print(k, p, algorithm, input_path, output_path)
+
+    do_kp_anonymity(path_to_file='data/table.csv', k=k)
