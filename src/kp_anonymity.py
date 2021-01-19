@@ -136,14 +136,23 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
         group_list = group_partition(group_to_anonymize, k)
+        both_have_less = True
         for group in group_list:
             if group.size() > k:
-                groups_to_anonymize.append(group)
-            elif group.size() == k:
-                k_anonymized_groups.append(group)
-            else:
-                less_than_k_anonymized_groups.append(group)
+                both_have_less = False
+        if not both_have_less:
+            for group in group_list:
+                if group.size() > k:
+                    groups_to_anonymize.append(group)
+                elif group.size() == k:
+                    k_anonymized_groups.append(group)
+                else:
+                    less_than_k_anonymized_groups.append(group)
+        else:
+            k_anonymized_groups.append(group_to_anonymize)
 
+    for ag in less_than_k_anonymized_groups:
+        print('shape:', ag.shape(), '; company codes:', ag.ids)
     """
     # postprocessing
     groups_to_anonymize = less_than_k_anonymized_groups
@@ -173,7 +182,7 @@ def do_kp_anonymity(path_to_file: str, k: int):
     visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
-    df = reduce_dataframe(df)
+    df = reduce_dataframe(df, companies_count=20)
     visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
@@ -193,6 +202,7 @@ def do_kp_anonymity(path_to_file: str, k: int):
 
 if __name__ == "__main__":
     algorithms = ['classic', 'kapra']
+    # TODO: add parameter - visualize graphs?
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
@@ -210,4 +220,4 @@ if __name__ == "__main__":
 
     print(k, p, algorithm, input_path, output_path)
 
-    do_kp_anonymity(path_to_file='data/table.csv', k=3)
+    do_kp_anonymity(path_to_file='data/table.csv', k=k)
