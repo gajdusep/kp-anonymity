@@ -2,9 +2,7 @@
 import numpy as np
 import pandas as pd
 import random
-
 from typing import Union, Tuple, List
-from node import Node
 
 
 class Group:
@@ -84,9 +82,10 @@ class Group:
             return 0, 0
         return self.group_table.shape
 
-    def to_node(self) -> Node:
-        # TODO: this Method should be implemented by Mattia, when he has the Node implementation
-        pass
+    # This is not needed anymore: Node has a function which creates a Node from a Group: create_node_from_group()
+    #def to_node(self) -> Node:
+        # this Method should be implemented by Mattia, when he has the Node implementation
+    #    pass
 
 
 def create_empty_group() -> Group:
