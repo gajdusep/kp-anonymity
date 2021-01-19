@@ -11,6 +11,7 @@ from group import *
 from node import *
 from load_data import *
 from visualize import *
+from itertools import combinations
 
 def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     """
@@ -118,21 +119,6 @@ def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     return rows.shape[0] * ncp
 
 
-def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
-    group_with_min_ncp = list_of_groups.pop(0)
-    merged_groups = G.append(group_with_min_ncp)
-    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
-
-    for group in list_of_groups:
-        tmp_merged_groups = G.append(group)
-        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
-        if tmp_ncp < min_ncp:
-            min_ncp = tmp_ncp
-            group_with_min_ncp = group
-
-    return group_with_min_ncp        
-
-
 def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     """
     Returns the best rows to start the k-anonymity with
@@ -143,7 +129,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     size = G.size()
     index_u, u_max = G.get_random_row()
 
-    for _ in range(3):
+    for _ in range(6):
         max_ncp = None
         for i in range(size):
             v = G.get_row_at_index(i)
@@ -218,44 +204,75 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
     groups_to_anonymize = [table_group]
     less_than_k_anonymized_groups = []
-    k_anonymized_groups = []
+    k_or_more_anonymized_groups = []
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
         group_list = group_partition(group_to_anonymize, k)
         both_have_less = True
         for group in group_list:
-            if group.size() > k:
+            if group.size() >= k:
                 both_have_less = False
         if not both_have_less:
             for group in group_list:
                 if group.size() > k:
                     groups_to_anonymize.append(group)
                 elif group.size() == k:
-                    k_anonymized_groups.append(group)
+                    k_or_more_anonymized_groups.append(group)
                 else:
                     less_than_k_anonymized_groups.append(group)
         else:
-            k_anonymized_groups.append(group_to_anonymize)
+            k_or_more_anonymized_groups.append(group_to_anonymize)
 
-    for ag in less_than_k_anonymized_groups:
-        print('shape:', ag.shape(), '; company codes:', ag.ids)
-    """
+    # for ag in less_than_k_anonymized_groups:
+       # print('shape:', ag.shape(), '; company codes:', ag.ids)
+    
     # postprocessing
-    groups_to_anonymize = less_than_k_anonymized_groups
-    while len(groups_to_anonymize) > 0:
-        group_to_anonymize = groups_to_anonymize.pop(0)
-        merging_group = group_to_be_merged(group_to_anonymize, groups_to_anonymize)
-        index_of_merging_group = group_to_anonymize.index(merging_group)
-        del groups_to_anonymize[index_of_merging_group]
-        group_to_anonymize.merge_group(merging_group)
-        if group_to_anonymize.size() >= k:
-            k_anonymized_groups.append(group_to_anonymize)
+    while len(less_than_k_anonymized_groups) > 0:
+        group_to_anonymize = less_than_k_anonymized_groups.pop(0)
+        size = group_to_anonymize.size()
+        groups_with_more_than_2k_minus_size = []
+        # find all group with more than 2k-size tuple and put them in "groups with more than 2k-size"
+        for group in k_or_more_anonymized_groups:           
+            if group.size() >= (2*k - size):
+                groups_with_more_than_2k_minus_size.append(group)
+            else:
+                continue
+        if groups_with_more_than_2k_minus_size.size() > 0:  
+            min_ncp = None
+            index_i = None
+            index_chosen_group = randrange(len(groups_with_more_than_2k_minus_size))
+            chosen_group = groups_with_more_than_2k_minus_size.pop(index_chosen_group)
+            index = []
+            for i in range(chosen_group.size()):
+                index.append(i)   # list of the indeces of group
+            combination = list(combinations(index, k-size))  # combination of index without repetition in order to get all possible k-size subsets of group
+            for i in range(combination.size()):
+                tmp = create_empty_group()
+                for j in range(k-size):
+                    r = get_row_at_index(combination[i][j])
+                    tmp.add_row_to_group(w)
+                trial_group = merge_two_groups(group_to_anonymize,tmp)
+                trial_group_min_max_diff = trial_group.get_min_max_diff()
+                ncp = compute_ncp(trial_group.group_table, trial_group_min_max_diff)
+                if min_ncp == None or ncp < min_ncp:
+                    min_ncp = ncp
+                    index_i = i
+            for i in range(k-size):
+                r = chosen_group.pop(combination[index_i][i])  # ask Pavel if he can add such function to group.py
+                group_to_anonymize.add_row_to_group(w)
+            k_or_more_anonymized_groups.append(group_to_anonymize)
+            k_or_more_anonymized_groups.append(chosen_group)
         else:
-            groups_to_anonymize.append(group_to_anonymize)
-    """
 
-    return k_anonymized_groups
+        
+
+
+
+    
+    
+
+    return k_or_more_anonymized_groups
 
 
 def do_kp_anonymity(path_to_file: str, k: int):
