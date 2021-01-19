@@ -31,21 +31,6 @@ def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     return rows.shape[0] * ncp
 
 
-def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
-    group_with_min_ncp = list_of_groups.pop(0)
-    merged_groups = G.append(group_with_min_ncp)
-    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
-
-    for group in list_of_groups:
-        tmp_merged_groups = G.append(group)
-        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
-        if tmp_ncp < min_ncp:
-            min_ncp = tmp_ncp
-            group_with_min_ncp = group
-
-    return group_with_min_ncp        
-
-
 def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     """
     Returns the best rows to start the k-anonymity with
@@ -160,31 +145,15 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
     """
 
     return k_anonymized_groups
-"""
-#minimize ncp
-def find_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group: #index
-    group_with_min_ncp = list_of_groups[0]
-    merged_groups = create_empty_group()
-    merged_groups = Group.merge_two_groups(group_with_min_ncp, G)
-    min_ncp = compute_ncp(merged_groups.group_table, merged_groups.get_min_max_diff())
 
-    for group in list_of_groups:
-        tmp_merged_groups = G.merge_group(group)
-        tmp_ncp = compute_ncp(tmp_merged_groups.group_table, tmp_merged_groups.get_min_max_diff())
-        if tmp_ncp < min_ncp:
-            min_ncp = tmp_ncp
-            group_with_min_ncp = group.copy()
 
-    return group_with_min_ncp
-"""
-
-#minimize ncp with index
-def find_index_of_group_to_be_merged(G:Group, list_of_groups: List[Group]) -> int:
-    #index_of_group_G = list_of_groups.index(G.group_table)
+# minimize ncp with index
+def find_index_of_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> int:
+    # index_of_group_G = list_of_groups.index(G.group_table)
     min_ncp = math.inf
     index_of_group_with_min_ncp = 0
     for i in range(len(list_of_groups)):
-        #if i != index_of_group_G:
+        # if i != index_of_group_G:
             tmp = create_empty_group()
 
             for j in range(G.size()): 
@@ -204,30 +173,17 @@ def find_index_of_group_to_be_merged(G:Group, list_of_groups: List[Group]) -> in
     return index_of_group_with_min_ncp
 
 
-#find the smallest group among those in list
+# find the smallest group among those in list
 def find_smallest_group(list_of_groups: List[Group]) -> Group:
-    size_of_smallest_group = math.inf
-
-    for group in list_of_groups:
-        size_of_current_group = group.size()
-
-        if size_of_current_group < size_of_smallest_group:
-            print('current size:', size_of_current_group, 'smallest size:', size_of_smallest_group)
-            smallest_group = create_empty_group()
-            size_of_smallest_group = size_of_current_group
-
-            for i in range(group.size()):
-                smallest_group.add_row_to_group(group.get_row_at_index(i))
-
-    return smallest_group   
+    return min(list_of_groups, key=lambda group: group.size())
 
 
-#k-anonymity bottom-up method
-def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:    
+# k-anonymity bottom-up method
+def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
     list_of_groups = []
     
-    #create a group for each tuple
-    for i in  range(table_group.size()):
+    # create a group for each tuple
+    for i in range(table_group.size()):
         group_with_single_tuple = create_empty_group()
         row = table_group.get_row_at_index(i)
         row_id = table_group.get_row_id_at_index(i)
@@ -237,44 +193,46 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
     print('List of initial groups: ')
     for i in range(len(list_of_groups)):
         print(list_of_groups[i].group_table, list_of_groups[i].ids)   
-    #updated_list_of_groups = copy.deepcopy(list_of_groups)  
+    # updated_list_of_groups = copy.deepcopy(list_of_groups)
 
-    #do k-anonymity on groups
+    # do k-anonymity on groups
     while find_smallest_group(list_of_groups).size() < k:
         print('Size of smallest group: ', find_smallest_group(list_of_groups).size()) 
     
         for i in range(len(list_of_groups)):
             if i < len(list_of_groups) and list_of_groups[i].size() < k:
 
-                #merge the group with min ncp
+                # merge the group with min ncp
                 print('Round ', i, ': merging groups with min ncp ...')
-                 
+
                 index_of_merging_group = find_index_of_group_to_be_merged(list_of_groups[i], list_of_groups)
                 merged_groups = create_empty_group()
                 for j in range(list_of_groups[i].size()):
-                    merged_groups.add_row_to_group(list_of_groups[i].get_row_at_index(j), list_of_groups[i].get_row_id_at_index(j))
+                    merged_groups.add_row_to_group(list_of_groups[i].get_row_at_index(j),
+                                                   list_of_groups[i].get_row_id_at_index(j))
                 for z in range(list_of_groups[index_of_merging_group].size()):
-                    merged_groups.add_row_to_group(list_of_groups[index_of_merging_group].get_row_at_index(z), list_of_groups[index_of_merging_group].get_row_id_at_index(z))
+                    merged_groups.add_row_to_group(list_of_groups[index_of_merging_group].get_row_at_index(z),
+                                                   list_of_groups[index_of_merging_group].get_row_id_at_index(z))
                 list_of_groups.append(merged_groups)
                 list_of_groups.pop(i)
                 if i < index_of_merging_group:
                     list_of_groups.pop(index_of_merging_group - 1)
                 else:
-                   list_of_groups.pop(index_of_merging_group)
+                    list_of_groups.pop(index_of_merging_group)
 
                 print('List updated: ')
                 for g in range(len(list_of_groups)):
                     print(list_of_groups[g].group_table)
                 print('Size of updated list: ', len(list_of_groups))
-        
-                               
+
             if i < len(list_of_groups) and list_of_groups[i].size() >= k*2:
-                #split group into two parts 
-                print('Round ',i , ': splitting group with dim > 2k ...')               
+                # split group into two parts
+                print('Round ', i, ': splitting group with dim > 2k ...')
                 new_group = create_empty_group()
                 h = 0
                 while h < k:
-                    row_to_separate = list_of_groups[i].pop(h) #add method to eliminate a row and return it
+                    # TODO: implement pop(?)
+                    row_to_separate = list_of_groups[i].pop(h)  # add method to eliminate a row and return it
                     id_row_to_separate = list_of_groups[i].get_row_id_at_index(h)
                     new_group.add_row_to_group(row_to_separate, id_row_to_separate)
                     i += 1
@@ -304,7 +262,6 @@ def do_kp_anonymity(path_to_file: str, k: int):
     print('table created from out data:', table_group.shape())
     print('   --- ', table_group.ids)
 
-
     '''
     list_of_groups = []
     #create a group for each tuple
@@ -316,7 +273,7 @@ def do_kp_anonymity(path_to_file: str, k: int):
         list_of_groups.append(group_with_single_tuple)
         #print('Creating a group for each tuple: ', group_with_single_tuple.group_table) 
     '''
-    #anonymized_groups = k_anonymity_top_down(table_group, k)
+    # anonymized_groups = k_anonymity_top_down(table_group, k)
     anonymized_groups = k_anonymity_bottom_up(table_group, k)
 
     '''
