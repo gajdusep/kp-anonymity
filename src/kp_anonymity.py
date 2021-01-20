@@ -1,16 +1,11 @@
-from typing import List, Tuple
-import random
-import numpy as np
-import matplotlib.pyplot as plt
-import random 
 import math
-import sys
 import argparse
+from enum import Enum
 
-from group import *
 from node import *
 from load_data import *
 from visualize import *
+
 
 def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     """
@@ -85,7 +80,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                     else:
                         nodes_to_process.extend(TB_nodes)
     
-    bad_leaves.sort(key = lambda node: node.size())
+    bad_leaves.sort(key=lambda node: node.size())
     for bad in bad_leaves:
         max_similarity = None
         most_similar_good = None
@@ -99,6 +94,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
         most_similar_good.members.extend(bad.members)
 
     return good_leaves
+
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     """
@@ -130,7 +126,7 @@ def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
             min_ncp = tmp_ncp
             group_with_min_ncp = group
 
-    return group_with_min_ncp        
+    return group_with_min_ncp
 
 
 def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
@@ -239,7 +235,8 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
             k_anonymized_groups.append(group_to_anonymize)
 
     for ag in less_than_k_anonymized_groups:
-        print('shape:', ag.shape(), '; company codes:', ag.ids)
+        print('less than k:', ag.shape(), '; company codes:', ag.ids)
+
     """
     # postprocessing
     groups_to_anonymize = less_than_k_anonymized_groups
@@ -258,7 +255,32 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
     return k_anonymized_groups
 
 
-def do_kp_anonymity(path_to_file: str, k: int):
+class KPAlgorithm(str, Enum):
+    TOPDOWN = 'top-down'
+    BOTTOMUP = 'bottom-up'
+    KAPRA = 'kapra'
+
+
+def kp_anonymity_classic(table_group: Group, k: int, p: int, kp_algorithm: str):
+    if kp_algorithm == KPAlgorithm.TOPDOWN:
+        anonymized_groups = k_anonymity_top_down(table_group, k)
+    elif kp_algorithm == KPAlgorithm.BOTTOMUP:
+        pass  # bottom up
+
+    for ag in anonymized_groups:
+        print('shape:', ag.shape(), '; company codes:', ag.ids)
+    visualize_intervals(anonymized_groups)
+
+    # TODO: p-anonymity here
+
+
+def kp_anonymity_kapra(table_group: Group, k: int, p: int):
+    # TODO: p-anonymity here
+    # TODO: k-anonymity
+    pass
+
+
+def do_kp_anonymity(path_to_file: str, k: int, p: int, kp_algorithm: str):
     # load the data from the file
     df = load_data_from_file(path_to_file)
 
@@ -276,35 +298,52 @@ def do_kp_anonymity(path_to_file: str, k: int):
     # plt.show()
 
     table_group = create_group_from_pandas_df(df)
-    print('table created from out data:', table_group.shape())
-    print('   --- ', table_group.ids)
-    table_min_max_diff = table_group.get_min_max_diff()
+    print('table created from out data:', table_group.shape(), table_group.ids)
 
-    anonymized_groups = k_anonymity_top_down(table_group, k)
-    for ag in anonymized_groups:
-        print('shape:', ag.shape(), '; company codes:', ag.ids)
+    # TODO: kp_anonymity_classic and also kp_anonymity_kapra should return something to be for example saved to the file
+    if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
+        kp_anonymity_classic(table_group, k, p, kp_algorithm)
+    else:
+        kp_anonymity_kapra(table_group, k, p)
+    
+    # TODO: finish the QI and SD
 
-    visualize_intervals(anonymized_groups)
 
-
-if __name__ == "__main__":
-    algorithms = ['classic', 'kapra']
+def parse_arguments():
     # TODO: add parameter - visualize graphs?
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-a', '--algorithm', required=False, default=algorithms[0])
+    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']
     p = args['p_anonymity']
-    algorithm = args['algorithm']
+
+    algo_str = args['algorithm']
+    if algo_str == 'top-down':
+        algo = KPAlgorithm.TOPDOWN
+    elif algo_str == 'bottom-up':
+        algo = KPAlgorithm.BOTTOMUP
+    elif algo_str == 'kapra':
+        algo = KPAlgorithm.KAPRA
+    else:
+        print('The algorithm should be one of the following: ' + ', '.join([e.value for e in KPAlgorithm]) +
+              '\nChoosing the default one: top-down\n')
+        algo = KPAlgorithm.TOPDOWN
+
     input_path = args['input_file']
     output_path = args['output_file']
 
-    print(k, p, algorithm, input_path, output_path)
+    return k, p, algo, input_path, output_path
 
-    do_kp_anonymity(path_to_file='data/table.csv', k=k)
+
+if __name__ == "__main__":
+    k, p, algo, input_path, output_path = parse_arguments()
+    print('kp-anonymity with the following parameters: k={}, p={}, algo={}, input_path={}, output_path={}'.format(
+        k, p, algo.value, input_path, output_path))
+
+    do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, kp_algorithm=algo)

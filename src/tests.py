@@ -6,6 +6,7 @@ import kp_anonymity
 from node import Node
 from group import Group
 
+
 def test_compute_pattern_similarity():
     Nodes = [
         Node(None, 3, "aabca", None),
@@ -17,6 +18,7 @@ def test_compute_pattern_similarity():
     for n in range(len(Nodes)):
         print(kp_anonymity.compute_pattern_similarity(Nodes[0], Nodes[n]))
     return
+
 
 def test_p_anonymity_naive():
     # create and print test group
@@ -56,6 +58,7 @@ def test_p_anonymity_naive():
             print(group.get_row_id_at_index(i))
 
     return
+
 
 if __name__ == "__main__":
     if sys.argv[1] == "p_naive":

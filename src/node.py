@@ -1,12 +1,11 @@
 from typing import List
-# import numpy as np
 from saxpy.znorm import znorm
 from saxpy.paa import paa
 from saxpy.alphabet import cuts_for_asize
 from saxpy.sax import ts_to_string
 from group import Group
-from numpy import ndarray
 import numpy as np
+
 
 class Node:
     """
@@ -69,6 +68,7 @@ class Node:
         """
         return Node(self.group, self.level, self.PR, self.members)
 
+
 def create_node_from_group(group: Group, PR_len: int) -> Node:
     level = 1
     if PR_len != 0:
@@ -76,7 +76,8 @@ def create_node_from_group(group: Group, PR_len: int) -> Node:
     else:
         PR = "a" * len(group.get_row_at_index(0))
     members = range(group.size())
-    return Node(group, level, PR, members)
+    return Node(group, level, PR, list(members))
+
 
 def merge_nodes(nodes: List[Node]) -> Node:
     # Merge nodes (should be all of the same level)
@@ -90,7 +91,8 @@ def merge_nodes(nodes: List[Node]) -> Node:
         members.extend(N.members)
     return Node(group, level, PR, members)
 
-def SAX(sequence: ndarray, alphabet_size: int, length: int = 0) -> str:
+
+def SAX(sequence: np.ndarray, alphabet_size: int, length: int = 0) -> str:
     """
     Compute SAX string of a sequence of numbers with specified alphabet size.
     Length of the output string may be specified; length 0 will generate a string as long as the sequence.
