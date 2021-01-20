@@ -306,8 +306,7 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
                         r = chosen_group.get_row_at_index(combination[j])
                         tmp.add_row_to_group(r)
 
-                    trial_group = Group.merge_two_groups(group_to_anonymize, tmp)
-                    trial_group_min_max_diff = trial_group.get_min_max_diff()
+                    trial_group = Group.merge_two_groups(group_to_anonymize, tmp)                    
                     ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
 
                     if ncp < min_ncp_alt1:
