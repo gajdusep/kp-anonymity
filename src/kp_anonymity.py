@@ -5,6 +5,7 @@ from enum import Enum
 from node import *
 from load_data import *
 from visualize import *
+from itertools import combinations
 
 
 def compute_pattern_similarity(N1: Node, N2: Node) -> float:
@@ -110,23 +111,11 @@ def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     z = np.max(rows, axis=0)
     y = np.min(rows, axis=0)
     zy_diff = z - y
+
+    # print(min_max_diff, np.sum(zy_diff / min_max_diff), zy_diff)
+
     ncp = np.sum(zy_diff / min_max_diff)
     return rows.shape[0] * ncp
-
-
-def group_to_be_merged(G: Group, list_of_groups: List[Group]) -> Group:
-    group_with_min_ncp = list_of_groups.pop(0)
-    merged_groups = G.append(group_with_min_ncp)
-    min_ncp = compute_ncp(merged_groups, merged_groups.min_max_diff)
-
-    for group in list_of_groups:
-        tmp_merged_groups = G.append(group)
-        tmp_ncp = compute_ncp(tmp_merged_groups, tmp_merged_groups.min_max_diff)
-        if tmp_ncp < min_ncp:
-            min_ncp = tmp_ncp
-            group_with_min_ncp = group
-
-    return group_with_min_ncp
 
 
 def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
@@ -138,16 +127,18 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
 
     size = G.size()
     index_u, u_max = G.get_random_row()
+    min_max_diff_g = G.get_min_max_diff()
 
     for _ in range(3):
         max_ncp = -math.inf
         for i in range(size):
+            if i == index_u:
+                continue
             v = G.get_row_at_index(i)
             tmp = create_empty_group()
             tmp.add_row_to_group(u_max)
             tmp.add_row_to_group(v)
-            tmp_min_max_diff = tmp.get_min_max_diff()
-            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
+            ncp = compute_ncp(tmp.group_table, min_max_diff_g)
             if ncp > max_ncp:
                 max_ncp = ncp
                 v_max = v
@@ -155,12 +146,13 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
 
         max_ncp = -math.inf
         for i in range(size):
+            if i == index_v:
+                continue
             u = G.get_row_at_index(i)
             tmp = create_empty_group()
             tmp.add_row_to_group(v_max)
             tmp.add_row_to_group(u)
-            tmp_min_max_diff = tmp.get_min_max_diff()
-            ncp = compute_ncp(tmp.group_table, tmp_min_max_diff)
+            ncp = compute_ncp(tmp.group_table, min_max_diff_g)
             if ncp > max_ncp:
                 max_ncp = ncp
                 u_max = u
@@ -176,7 +168,11 @@ def group_partition(G: Group, k: int):
     Gu = create_empty_group()
     Gv = create_empty_group()
 
+    # TODO: should be used min_max_diff?
+    min_max_diff_g = G.get_min_max_diff()
+
     (index_u, index_v) = get_init_tuples_uv(G)
+    print('       -- ', index_v, index_u)
     u_max = G.get_row_at_index(index_u)
     u_max_id = G.get_row_id_at_index(index_u)
     v_max = G.get_row_at_index(index_v)
@@ -193,11 +189,13 @@ def group_partition(G: Group, k: int):
             w_id = G.get_row_id_at_index(i)
 
             Gu.add_row_to_group(w)
-            ncp_Gu = compute_ncp(Gu.group_table, Gu.get_min_max_diff())
+            ncp_Gu = compute_ncp(Gu.group_table, min_max_diff_g)
+            print(ncp_Gu)
             Gu.delete_last_added_row()
 
             Gv.add_row_to_group(w)
-            ncp_Gv = compute_ncp(Gv.group_table, Gv.get_min_max_diff())
+            ncp_Gv = compute_ncp(Gv.group_table, min_max_diff_g)
+            print(ncp_Gv)
             Gv.delete_last_added_row()
 
             if ncp_Gu < ncp_Gv:
@@ -209,50 +207,137 @@ def group_partition(G: Group, k: int):
 
 
 def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
+    print('table group:', table_group.ids)
+
     if table_group.size() <= k:
         return [table_group]
 
     groups_to_anonymize = [table_group]
     less_than_k_anonymized_groups = []
-    k_anonymized_groups = []
+    k_or_more_anonymized_groups = []
+    min_max_diff_g = table_group.get_min_max_diff()
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
         group_list = group_partition(group_to_anonymize, k)
+        print('----------------------------------------')
+        for group in group_list:
+            print('    -- group:', group.ids)
+
         both_have_less = True
         for group in group_list:
-            if group.size() > k:
+            if group.size() >= k:
                 both_have_less = False
         if not both_have_less:
             for group in group_list:
                 if group.size() > k:
                     groups_to_anonymize.append(group)
                 elif group.size() == k:
-                    k_anonymized_groups.append(group)
+                    k_or_more_anonymized_groups.append(group)
                 else:
                     less_than_k_anonymized_groups.append(group)
         else:
-            k_anonymized_groups.append(group_to_anonymize)
+            k_or_more_anonymized_groups.append(group_to_anonymize)
 
+    for ag in k_or_more_anonymized_groups:
+        print('k or more:', ag.shape(), '; company codes:', ag.ids)
     for ag in less_than_k_anonymized_groups:
         print('less than k:', ag.shape(), '; company codes:', ag.ids)
 
-    """
-    # postprocessing
-    groups_to_anonymize = less_than_k_anonymized_groups
-    while len(groups_to_anonymize) > 0:
-        group_to_anonymize = groups_to_anonymize.pop(0)
-        merging_group = group_to_be_merged(group_to_anonymize, groups_to_anonymize)
-        index_of_merging_group = group_to_anonymize.index(merging_group)
-        del groups_to_anonymize[index_of_merging_group]
-        group_to_anonymize.merge_group(merging_group)
-        if group_to_anonymize.size() >= k:
-            k_anonymized_groups.append(group_to_anonymize)
-        else:
-            groups_to_anonymize.append(group_to_anonymize)
-    """
+    print('--- POSTPROCESING -----')
+    # -----------------------
+    # --- POSTPROCESING -----
+    # -----------------------
+    while len(less_than_k_anonymized_groups) > 0:
+        group_to_anonymize = less_than_k_anonymized_groups.pop(0)
+        print('   --', group_to_anonymize.ids)
+        size = group_to_anonymize.size()
 
-    return k_anonymized_groups
+        min_ncp_small_groups = math.inf
+        min_ncp_small_groups_object = None
+        min_ncp_small_groups_index = -1
+        for i, group in enumerate(less_than_k_anonymized_groups):
+            trial_group = Group.merge_two_groups(group_to_anonymize, group)
+            ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
+            if ncp < min_ncp_small_groups:
+                min_ncp_small_groups = ncp
+                min_ncp_small_groups_object = group
+                min_ncp_small_groups_index = i
+
+        min_ncp_more_than_k_groups = math.inf
+        min_ncp_more_than_k_groups_object = None
+        for i, group in enumerate(k_or_more_anonymized_groups):
+            trial_group = Group.merge_two_groups(group_to_anonymize, group)
+            ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
+            if ncp < min_ncp_more_than_k_groups:
+                min_ncp_more_than_k_groups = ncp
+                min_ncp_more_than_k_groups_object = group
+
+        min_ncp_was_in_less_than_k = False
+        min_ncp_group = None
+        min_ncp = math.inf
+        if min_ncp_small_groups < min_ncp_more_than_k_groups:
+            min_ncp_was_in_less_than_k = True
+            min_ncp = min_ncp_small_groups
+            min_ncp_group = min_ncp_small_groups_object
+        else:
+            min_ncp = min_ncp_more_than_k_groups
+            min_ncp_group = min_ncp_more_than_k_groups_object
+
+        # ----------------------------------------------------
+        # ----- ALTERNATIVE 1 (first, we can find a set G' blablabla)
+        # ----------------------------------------------------
+        # find all group with more than 2k-size tuple and put them in "groups with more than 2k-size"
+        groups_with_more_than_2k_minus_size = [g for g in k_or_more_anonymized_groups if g.size() >= 2 * k - size]
+        min_ncp_alt1 = math.inf
+        min_ncp_alt1_group_index = -1
+        min_subgroup_indexes = None
+        if len(groups_with_more_than_2k_minus_size) > 0:
+            for index_chosen_group in range(len(groups_with_more_than_2k_minus_size)):
+                chosen_group = groups_with_more_than_2k_minus_size[index_chosen_group]
+
+                indexes = list(range(chosen_group.size()))
+                # combination of index without repetition in order to get all possible k-size subsets of group
+                subgroup_combinations = list(combinations(indexes, k-size))
+
+                for combination in subgroup_combinations:
+                    tmp = create_empty_group()
+                    for j in range(k-size):
+                        r = chosen_group.get_row_at_index(combination[j])
+                        tmp.add_row_to_group(r)
+
+                    trial_group = Group.merge_two_groups(group_to_anonymize, tmp)
+                    trial_group_min_max_diff = trial_group.get_min_max_diff()
+                    ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
+
+                    if ncp < min_ncp_alt1:
+                        min_ncp_alt1_group_index = index_chosen_group
+                        min_ncp_alt1 = ncp
+                        min_subgroup_indexes = combination
+
+        if min_ncp_alt1 < min_ncp:
+            print('   -- group:', group_to_anonymize.ids, ' - alternative 1 happened', min_subgroup_indexes)
+            # THE ALTERNATIVE 1 IS BETTER
+
+            # merge the subgroup that we obtained in the alternative 1
+            group_to_pop_tuples = groups_with_more_than_2k_minus_size[min_ncp_alt1_group_index]
+            for combination_index in min_subgroup_indexes:
+                row, row_id = group_to_pop_tuples.pop(combination_index)
+                group_to_anonymize.add_row_to_group(row, row_id)
+            k_or_more_anonymized_groups.append(group_to_anonymize)
+        else:
+            # THE ALTERNATIVE 2 IS BETTER
+
+            if min_ncp_was_in_less_than_k:
+                print('   -- group:', group_to_anonymize.ids, ' - merged with a small group')
+                less_than_k_anonymized_groups[min_ncp_small_groups_index].merge_group(group_to_anonymize)
+                if less_than_k_anonymized_groups[min_ncp_small_groups_index].size() >= k:
+                    k_or_more_anonymized_groups.append(less_than_k_anonymized_groups.pop(min_ncp_small_groups_index))
+            else:
+                print('   -- group:', group_to_anonymize.ids, ' - merged with a bigger')
+                min_ncp_group.merge_group(group_to_anonymize)
+
+    return k_or_more_anonymized_groups
 
 
 class KPAlgorithm(str, Enum):
@@ -268,7 +353,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, kp_algorithm: str):
         pass  # bottom up
 
     for ag in anonymized_groups:
-        print('shape:', ag.shape(), '; company codes:', ag.ids)
+        print('after the k anonymization:', ag.shape(), '; company codes:', ag.ids)
     visualize_intervals(anonymized_groups)
 
     # TODO: p-anonymity here
@@ -286,13 +371,13 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, kp_algorithm: str):
 
     # do some preprocessing with the data
     df = remove_rows_with_nan(df)
-    visualize_all_companies(df)
+    # visualize_all_companies(df)
     df = remove_outliers(df, max_stock_value=5000)
-    visualize_all_companies(df)
+    # visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
-    df = reduce_dataframe(df, companies_count=20)
-    visualize_all_companies(df)
+    df = reduce_dataframe(df, companies_count=30)
+    # visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
     # plt.show()

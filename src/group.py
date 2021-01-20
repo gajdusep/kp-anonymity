@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import random
 from typing import Union, Tuple, List
+import copy
 
 
 class Group:
@@ -22,6 +23,15 @@ class Group:
             self.ids.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
 
+    def pop(self, index) -> Union[Tuple[np.ndarray, str], None]:
+        if self.size() > 0:
+            popped_id = self.ids.pop()
+            popped_row = self.group_table[index]
+            self.group_table = np.delete(self.group_table, index, axis=0)
+
+            return popped_row, popped_id
+        return None
+
     def merge_group(self, group: 'Group'):
         """
         Adds the group to merge to this group.
@@ -38,7 +48,9 @@ class Group:
         :param group2: second group
         :return: merged group
         """
-        new_group = Group(group1.group_table, group1.ids)
+        group_table_copy = copy.deepcopy(group1.group_table)
+        group_ids_copy = copy.deepcopy(group1.ids)
+        new_group = Group(group_table_copy, group_ids_copy)
         new_group.merge_group(group2)
         return new_group
 
