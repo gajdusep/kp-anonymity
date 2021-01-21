@@ -119,7 +119,7 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
 
 def recycle_bad_leaves(leaves_dict: Dict[str, List[Node]], p: int) -> List[Node]:
     """
-    "Recycle bad leaves" step of the KAPRA algorithm which merges bad leaves creating good ones.
+    "Recycle bad leaves" step of the KAPRA algorithm, which merges bad leaves creating good ones.
     This function returns a list of all good leaf nodes.
     """
     bad_leaves = leaves_dict["bad leaves"]
