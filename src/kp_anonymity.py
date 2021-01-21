@@ -1,7 +1,10 @@
+from ast import Str
 import math
 import argparse
 from enum import Enum
 from typing import Dict
+
+from matplotlib.font_manager import MSFontDirectories
 
 from node import *
 from load_data import *
@@ -28,7 +31,7 @@ def compute_pattern_similarity(N1: Node, N2: Node) -> float:
         diff = diff / len(N1.PR)
         return 1 - diff
 
-def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -> Dict[List[Node]]:
+def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -> Dict[str, List[Node]]:
     """
     The algorithm is implemented in a non-recursive way because keeping the entire tree structure is not needed as we only use the leaf nodes.
     The nodes_to_process is the list of nodes which have not already been processed.
@@ -78,14 +81,14 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -
                     nodes_to_process = TG_nodes
 
                     if total_TB_size >= p:
-                        child_merge = merge_nodes(TB_nodes)
+                        child_merge = merge_tree_nodes(TB_nodes)
                         nodes_to_process.append(child_merge)
                     else:
                         nodes_to_process.extend(TB_nodes)
     
     return {'good leaves': good_leaves, 'bad leaves': bad_leaves}
 
-def postprocess(leaves_dict: Dict[List[Node]]) -> List[Node]:
+def postprocess(leaves_dict: Dict[str, List[Node]]) -> List[Node]:
     """
     The postprocessing phase takes care of the bad leaves integrating them into the good leaves.
     The modified good leaves are then returned.
@@ -114,6 +117,63 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
     """
     return postprocess(create_p_anonymity_tree(group, p, max_level, PR_len))
 
+def recycle_bad_leaves(leaves_dict: Dict[str, List[Node]], p: int) -> List[Node]:
+    """
+    "Recycle bad leaves" step of the KAPRA algorithm which merges bad leaves creating good ones.
+    This function returns a list of all good leaf nodes.
+    """
+    bad_leaves = leaves_dict["bad leaves"]
+    good_leaves = leaves_dict["good leaves"]
+    # If there are no bad leaves, then this phase is not needed
+    if len(bad_leaves) == 0:
+        return good_leaves
+    
+    # Preparation: bad leaves are sorted in different lists depending on their level
+    bad_leaves_by_level: Dict[int, List[Node]] = {}
+    for bad_leaf in bad_leaves:
+        if bad_leaf.level in bad_leaves_by_level:
+            bad_leaves_by_level[bad_leaf.level].append(bad_leaf)
+        else:
+            bad_leaves_by_level[bad_leaf.level] = [bad_leaf]
+    
+    current_level = max(bad_leaves_by_level)
+    bad_rows = sum(bad_leaf.size() for bad_leaf in bad_leaves)
+    while bad_rows >= p:
+        merged_leaves: List[Node] = []
+        bad_leaves_by_PR: Dict[str, Node] = {}
+        for bad_leaf in bad_leaves_by_level[current_level]:
+            if bad_leaf.PR not in bad_leaves_by_PR:
+                bad_leaves_by_PR[bad_leaf.PR] = bad_leaf
+            # If there are other bad leaves with the same PR, merge them
+            else:
+                merging_leaf = bad_leaves_by_PR[bad_leaf.PR]
+                merging_leaf.members.extend(bad_leaf.members)
+                if merging_leaf not in merged_leaves:
+                    merged_leaves.append(merging_leaf)
+        
+        for merged_leaf in merged_leaves:
+            # If the merged leaf is not smaller than p, then it is a good leaf
+            if merged_leaf.size() >= p:
+                good_leaves.append(merged_leaf)
+                bad_rows -= merged_leaf.size()
+            # Otherwise its level is deacreased and it will be checked in the next step for a possible merge
+            else:
+                merged_leaf.level -= 1
+                row_index = merged_leaf.members[0]
+                row = merged_leaf.group.get_row_at_index(row_index)
+                merged_leaf.PR = SAX(row, merged_leaf.level, merged_leaf.PR_len())
+                bad_leaves_by_level[merged_leaf.level].append(merged_leaf)
+        
+        current_level -= 1
+    
+    print(bad_rows + " were suppressed: they could not be merged")
+    return good_leaves
+
+def p_anonimity_kapra(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
+    """
+    The list of processed nodes is returned. Those can then be used to rebuild the table rows.
+    """
+    return recycle_bad_leaves(create_p_anonymity_tree(group, p, max_level, PR_len), p)
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
     """

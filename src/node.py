@@ -79,13 +79,15 @@ def create_node_from_group(group: Group, PR_len: int) -> Node:
     return Node(group, level, PR, list(members))
 
 
-def merge_nodes(nodes: List[Node]) -> Node:
+def merge_tree_nodes(nodes: List[Node]) -> Node:
     # Merge nodes (should be all of the same level)
     # The level of the merged node is [level of the merging nodes]-1
-    # The merged node should have the same PR as its parent
+    # The merged node will have the same PR as the parent of the merging nodes
     group = nodes[0].group
     level = nodes[0].level - 1
-    PR = SAX(group.get_row_at_index(0), level, nodes[0].PR_len())
+    row_index = nodes[0].members[0]
+    row = group.get_row_at_index(row_index)
+    PR = SAX(row, level, nodes[0].PR_len())
     members = []
     for N in nodes:
         members.extend(N.members)
