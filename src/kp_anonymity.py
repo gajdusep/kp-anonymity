@@ -1,6 +1,7 @@
 import math
 import argparse
 from enum import Enum
+from typing import Dict
 
 from node import *
 from load_data import *
@@ -27,15 +28,16 @@ def compute_pattern_similarity(N1: Node, N2: Node) -> float:
         diff = diff / len(N1.PR)
         return 1 - diff
 
-
-def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
+def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -> Dict[List[Node]]:
     """
     The algorithm is implemented in a non-recursive way because keeping the entire tree structure is not needed as we only use the leaf nodes.
     The nodes_to_process is the list of nodes which have not already been processed.
     As nodes are labeled as good or bad leaves, they are added to the good_leaves or bad_leaves lists, respectively.
     The new_nodes_to_process flag indicates wether during the current cycle are new nodes are created by splits.
     If there are new nodes, the nodes_to_process list is updated and those new nodes are processed.
-    In the end, the list of processed nodes is returned. Those can then be used to rebuild the table rows.
+    A dictionary containing two keys is returned:
+    - the first key is "good leaves" and contains the list of good leaf nodes, and
+    - the second key is "bad leaves" and contains the list of bad leaf nodes.
     """
     # Initialize nodes list with the starting node, corresponding to group
     nodes_to_process = [create_node_from_group(group, PR_len)]
@@ -81,6 +83,16 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
                     else:
                         nodes_to_process.extend(TB_nodes)
     
+    return {'good leaves': good_leaves, 'bad leaves': bad_leaves}
+
+def postprocess(leaves_dict: Dict[List[Node]]) -> List[Node]:
+    """
+    The postprocessing phase takes care of the bad leaves integrating them into the good leaves.
+    The modified good leaves are then returned.
+    """
+    good_leaves = leaves_dict["good leaves"]
+    bad_leaves = leaves_dict["bad leaves"]
+
     bad_leaves.sort(key=lambda node: node.size())
     for bad in bad_leaves:
         max_similarity = None
@@ -95,6 +107,12 @@ def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List
         most_similar_good.members.extend(bad.members)
 
     return good_leaves
+
+def p_anonimity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
+    """
+    The list of processed nodes is returned. Those can then be used to rebuild the table rows.
+    """
+    return postprocess(create_p_anonymity_tree(group, p, max_level, PR_len))
 
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
