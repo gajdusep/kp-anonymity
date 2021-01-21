@@ -13,9 +13,7 @@ class Node:
     group:      The original group which generated the tree
     level:      SAX level of the node
     PR:         pattern representation
-    PR_len:     length of PR
     members:    indexes of rows belonging to the node
-    size:       number of rows belonging to the node
     """
     
     def __init__(self, group: Group, level: int, PR: str, members: List[int]):
@@ -54,13 +52,31 @@ class Node:
                     return
             self.level = new_level
             self.PR = new_PR
-
-    def to_rows(self):
+    
+    def table(self) -> np.ndarray:
+        """
+        Returns a table containing the member rows of the node
+        """
         rows = []
         for i in self.members:
-            row = self.group.get_row_at_index(i).copy().append(self.PR)
-            rows.append(row)
-        return rows
+            rows.append(self.group.get_row_at_index(i))
+        table: np.ndarray = np.vstack(rows)
+        return table
+        
+    def ids(self) -> List[str]:
+        """
+        Returns a list containing ids corresponding to the members of the node
+        """
+        ids = []
+        for i in self.members:
+            ids.append(self.group.get_row_id_at_index(i))
+        return ids
+    
+    def to_group(self) -> Group:
+        """
+        Returns a group containing the member rows of the node
+        """
+        return Group(self.table(), self.ids())
     
     def copy(self):
         """
@@ -80,9 +96,11 @@ def create_node_from_group(group: Group, PR_len: int) -> Node:
 
 
 def merge_tree_nodes(nodes: List[Node]) -> Node:
-    # Merge nodes (should be all of the same level)
-    # The level of the merged node is [level of the merging nodes]-1
-    # The merged node will have the same PR as the parent of the merging nodes
+    """
+    Merges nodes from a tree which should be all of the same level
+    The level of the merged node is [level of the merging nodes]-1
+    The merged node will have the same PR as the parent of the merging nodes
+    """
     group = nodes[0].group
     level = nodes[0].level - 1
     row_index = nodes[0].members[0]
