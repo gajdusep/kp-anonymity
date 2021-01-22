@@ -1,10 +1,11 @@
+import numpy as np
 from typing import List
 from saxpy.znorm import znorm
 from saxpy.paa import paa
 from saxpy.alphabet import cuts_for_asize
 from saxpy.sax import ts_to_string
+
 from group import Group
-import numpy as np
 
 
 class Node:

@@ -1,14 +1,14 @@
 import numpy as np
 import pandas as pd
 import random
-from typing import Union, Tuple, List
 import copy
-import node
+
+from typing import Union, Tuple, List
 
 
 class Group:
 
-    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], node: node.Node = None):
+    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], node: 'Node' = None):
         self.group_table = group_table
         self.ids = ids
         self.node = node

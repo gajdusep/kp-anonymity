@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 from matplotlib.font_manager import FontProperties
+from typing import List
 
-from group import *
+from group import Group
 
 
 def visualize_all_companies(dataframe: pd.DataFrame):
