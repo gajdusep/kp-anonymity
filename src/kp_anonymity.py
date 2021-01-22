@@ -1,6 +1,6 @@
 import argparse
 from enum import Enum
-from typing import List
+from typing import DefaultDict, List
 
 from load_data import *
 from visualize import visualize_intervals
@@ -15,10 +15,7 @@ class KPAlgorithm(str, Enum):
     BOTTOMUP = 'bottom-up'
     KAPRA = 'kapra'
 
-# Global max_level constant
-max_level = 4
-
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, kp_algorithm: str):
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     elif kp_algorithm == KPAlgorithm.BOTTOMUP:
@@ -37,7 +34,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, kp_alg
         print(node.ids(), node.PR, node.group.ids)
 
 
-def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int):
+def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
     p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
     print('all groups given as a parameter:', p_anonymized_groups)
@@ -89,7 +86,7 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int):
     print('final_group_list', final_group_list)
 
 
-def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, kp_algorithm: str):
+def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     # load the data from the file
     df = load_data_from_file(path_to_file)
 
@@ -111,9 +108,9 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, kp_algorithm
 
     # TODO: kp_anonymity_classic and also kp_anonymity_kapra should return something to be for example saved to the file
     if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
-        kp_anonymity_classic(table_group, k, p, PR_len, kp_algorithm)
+        kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
     else:
-        kp_anonymity_kapra(table_group, k, p, PR_len)
+        kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
     
     # TODO: finish the QI and SD
 
@@ -124,6 +121,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
+    parser.add_argument('-l', '--PR-length', required=False, type=int, default=0)
+    parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
@@ -131,6 +130,8 @@ def parse_arguments():
 
     k = args['k_anonymity']
     p = args['p_anonymity']
+    PR_len = args['PR-length']
+    max_level = args['max-level']
 
     algo_str = args['algorithm']
     if algo_str == 'top-down':
@@ -147,12 +148,12 @@ def parse_arguments():
     input_path = args['input_file']
     output_path = args['output_file']
 
-    return k, p, algo, input_path, output_path
+    return k, p, PR_len, max_level, algo, input_path, output_path
 
 
 if __name__ == "__main__":
-    k, p, PR_len, algo, input_path, output_path = parse_arguments()
-    print('kp-anonymity with the following parameters: k={}, p={}, PR_len={}, algo={}, input_path={}, output_path={}'.format(
+    k, p, PR_len, max_level, algo, input_path, output_path = parse_arguments()
+    print('kp-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={}, output_path={}'.format(
         k, p, PR_len, algo.value, input_path, output_path))
 
-    do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, kp_algorithm=algo)
+    do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
