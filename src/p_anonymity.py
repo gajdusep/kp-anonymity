@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from group import Group
 from node import Node, create_node_from_group, merge_tree_nodes, SAX
-
+from kp_anonymity import verbose
 
 def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     """
@@ -29,7 +29,9 @@ def compute_pattern_similarity(N1: Node, N2: Node) -> float:
             diff += abs((ord(N1.PR[i]) - 97) / (N1.level - 1) - (ord(N2.PR[i]) - 97) / (N2.level - 1))
     
     diff = diff / len(N1.PR)
-    return 1 - diff
+    sim = 1 - diff
+    verbose("PR1={}, PR2={}, similarity={}".format(N1.PR, N2.PR, sim))
+    return sim
 
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -> Dict[str, List[Node]]:
@@ -44,6 +46,7 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -
     - the first key is "good leaves" and contains the list of good leaf nodes, and
     - the second key is "bad leaves" and contains the list of bad leaf nodes.
     """
+    verbose('Starting "Create tree" phase')
     # Initialize nodes list with the starting node, corresponding to group
     nodes_to_process = [create_node_from_group(group, PR_len)]
     new_nodes_to_process = True
@@ -120,8 +123,8 @@ def recycle_bad_leaves(leaves_dict: Dict[str, List[Node]], p: int) -> List[Node]
     "Recycle bad leaves" step of the KAPRA algorithm, which merges bad leaves creating good ones.
     This function returns a list of all good leaf nodes.
     """
-    bad_leaves = leaves_dict["bad leaves"]
-    good_leaves = leaves_dict["good leaves"]
+    bad_leaves = leaves_dict['bad leaves']
+    good_leaves = leaves_dict['good leaves']
     # If there are no bad leaves, then this phase is not needed
     if len(bad_leaves) == 0:
         return good_leaves

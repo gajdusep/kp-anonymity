@@ -7,18 +7,13 @@ from visualize import visualize_intervals
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down
-from p_anonymity import p_anonymity_naive, p_anonymity_kapra
+import p_anonymity
+from verbose import setverbose, unsetverbose, getverbose, verbose
 
 class KPAlgorithm(str, Enum):
     TOPDOWN = 'top-down'
     BOTTOMUP = 'bottom-up'
     KAPRA = 'kapra'
-
-v = False
-def verbose(text: str):
-    if v == True:
-        print(text)
-    return
 
 def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     if kp_algorithm == KPAlgorithm.TOPDOWN:
@@ -33,14 +28,14 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
 
     final_nodes: List[Node] = []
     for ag in anonymized_groups:
-        final_nodes.extend(p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len))
+        final_nodes.extend(p_anonymity.p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len))
     print('--- final nodes:', len(final_nodes))
     for node in final_nodes:
         print(node.ids(), node.PR, node.group.ids)
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
-    p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
+    p_anonymized_nodes: List[Node] = p_anonymity.p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
     print('all groups given as a parameter:', p_anonymized_groups)
 
@@ -136,8 +131,8 @@ def parse_arguments():
 
     k = args['k_anonymity']
     p = args['p_anonymity']
-    PR_len = args['PR-length']
-    max_level = args['max-level']
+    PR_len = args['PR_length']
+    max_level = args['max_level']
     
     algo_str = args['algorithm']
     if algo_str == 'top-down':
@@ -153,15 +148,17 @@ def parse_arguments():
 
     input_path = args['input_file']
     output_path = args['output_file']
-    global v
-    v = args['verbose']
+    if args['verbose']:
+        setverbose()
+    else:
+        unsetverbose()
     
     return k, p, PR_len, max_level, algo, input_path, output_path
 
 
 if __name__ == "__main__":
     k, p, PR_len, max_level, algo, input_path, output_path = parse_arguments()
-    print('kp-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={}, output_path={}'.format(
-        k, p, PR_len, algo.value, input_path, output_path))
-
+    print('kp-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={}, output_path={}, verbose={}'.format(
+        k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    verbose("Verbose output enabled")
     do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
