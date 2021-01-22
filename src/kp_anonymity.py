@@ -9,11 +9,16 @@ from node import Node
 from k_anonymity import k_anonymity_top_down
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 
-
 class KPAlgorithm(str, Enum):
     TOPDOWN = 'top-down'
     BOTTOMUP = 'bottom-up'
     KAPRA = 'kapra'
+
+v = False
+def verbose(text: str):
+    if v == True:
+        print(text)
+    return
 
 def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     if kp_algorithm == KPAlgorithm.TOPDOWN:
@@ -126,13 +131,14 @@ def parse_arguments():
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
+    parser.add_argument('-v', '--verbose', required=False, action='store_true')
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']
     p = args['p_anonymity']
     PR_len = args['PR-length']
     max_level = args['max-level']
-
+    
     algo_str = args['algorithm']
     if algo_str == 'top-down':
         algo = KPAlgorithm.TOPDOWN
@@ -147,7 +153,9 @@ def parse_arguments():
 
     input_path = args['input_file']
     output_path = args['output_file']
-
+    global v
+    v = args['verbose']
+    
     return k, p, PR_len, max_level, algo, input_path, output_path
 
 
