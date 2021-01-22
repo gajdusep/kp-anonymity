@@ -119,7 +119,12 @@ def SAX(sequence: np.ndarray, alphabet_size: int, length: int = 0) -> str:
     Length of the output string may be specified; length 0 will generate a string as long as the sequence.
     """
     if alphabet_size == 1:
-        return "a" * len(sequence)
-    if length == 0 or length == len(sequence):
-        return ts_to_string(znorm(sequence), cuts_for_asize(alphabet_size))
-    return ts_to_string(paa(znorm(sequence), length), cuts_for_asize(alphabet_size))
+        if length == 0:
+            return "a" * len(sequence)
+        else:
+            return "a" * length
+    else:    
+        if length == 0 or length == len(sequence):
+            return ts_to_string(znorm(sequence), cuts_for_asize(alphabet_size))
+        else:
+            return ts_to_string(paa(znorm(sequence), length), cuts_for_asize(alphabet_size))
