@@ -11,18 +11,25 @@ def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     between the two characters in the same position of the two PRs.
     The similarity is 1 - difference.
     """
+    if N1.PR_len() != N2.PR_len():
+        raise ValueError("Pattern similarity cannot be computed on PR of different lengths")
+    
     diff = 0
-    if N1.level == N2.level:
+    if N1.level == 1 or N2.level == 1:
+        if N1.level == N2.level:
+            return 1
+        else:
+            return 0
+    elif N1.level == N2.level:
         for i in range(len(N1.PR)):
-            diff += abs(ord(N1.PR[i]) - ord(N2.PR[i])) / N1.level
-        diff = diff / len(N1.PR)
-        return 1 - diff
+            diff += abs(ord(N1.PR[i]) - ord(N2.PR[i])) / (N1.level - 1)
     else:
-        # if the two PRs are of different levels, their values are normalized separately
+        # If the two PRs are of different levels, their values are normalized separately
         for i in range(len(N1.PR)):
             diff += abs((ord(N1.PR[i]) - 97) / (N1.level - 1) - (ord(N2.PR[i]) - 97) / (N2.level - 1))
-        diff = diff / len(N1.PR)
-        return 1 - diff
+    
+    diff = diff / len(N1.PR)
+    return 1 - diff
 
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, PR_len: int) -> Dict[str, List[Node]]:

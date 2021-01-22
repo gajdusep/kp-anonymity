@@ -13,10 +13,12 @@ def test_compute_pattern_similarity():
         Node(None, 3, "abbca", None),
         Node(None, 3, "abcba", None),
         Node(None, 5, "aacea", None),
-        Node(None, 5, "acdeb", None)
+        Node(None, 5, "acdeb", None),
+        Node(None, 1, "aaaaa", None)
     ]
     for n in range(len(Nodes)):
         print(compute_pattern_similarity(Nodes[0], Nodes[n]))
+    print(compute_pattern_similarity(Nodes[-1], Nodes[-1]))
     return
 
 
