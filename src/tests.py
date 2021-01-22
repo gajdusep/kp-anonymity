@@ -2,9 +2,9 @@ import sys
 
 import numpy as np
 
-import kp_anonymity
 from node import Node
 from group import Group
+from p_anonymity import compute_pattern_similarity, p_anonymity_naive
 
 
 def test_compute_pattern_similarity():
@@ -16,7 +16,7 @@ def test_compute_pattern_similarity():
         Node(None, 5, "acdeb", None)
     ]
     for n in range(len(Nodes)):
-        print(kp_anonymity.compute_pattern_similarity(Nodes[0], Nodes[n]))
+        print(compute_pattern_similarity(Nodes[0], Nodes[n]))
     return
 
 
@@ -48,7 +48,7 @@ def test_p_anonymity_naive():
         print(ids[i] + ": " + str(row))
 
     # p-anonymity
-    leaves = kp_anonymity.p_anonimity_naive(group, 2, 5, 0)
+    leaves = p_anonymity_naive(group, 2, 5, 0)
 
     # print output
     for leave in leaves:
