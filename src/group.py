@@ -80,6 +80,9 @@ class Group:
         table_mins = self.get_mins()
         return table_maxs - table_mins
 
+    def instant_value_loss(self) -> float:
+        return np.sqrt(np.sum(self.get_min_max_diff()) / self.shape()[1])
+
     def get_group_intervals(self):
         table_maxs = self.get_maxes()
         table_mins = self.get_mins()
@@ -94,6 +97,12 @@ class Group:
         if self.group_table is None:
             return 0, 0
         return self.group_table.shape
+
+    def __str__(self):
+        return str(self.ids)
+
+    def __repr__(self):
+        return str(self)
 
 
 def create_empty_group() -> Group:

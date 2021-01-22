@@ -32,15 +32,59 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, kp_algorithm: str):
         final_nodes.extend(p_anonymity_naive(group=ag, p=p, max_level=3, PR_len=3))
     print('--- final nodes:', len(final_nodes))
     for node in final_nodes:
-        print(node.ids(), node.PR)
+        print(node.ids(), node.PR, node.group.ids)
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int):
     p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=3, PR_len=3)
-    for node in p_anonymized_nodes:
-        print(node.ids(), node.PR)
+    p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
+    print('all groups given as a parameter:', p_anonymized_groups)
 
-    # TODO: k-anonymity
+    final_group_list: List[Group] = []
+
+    # every group bigger than 2*p must be split
+    for group in p_anonymized_groups:
+        if group.size() > 2*p:
+            # split it by top-down clustering
+            continue
+
+    # if any group is already bigger than k, add it to the final group list
+    indices_bigger_than_k = [i for i, group in enumerate(p_anonymized_groups) if group.size() >= k]
+    for i in sorted(indices_bigger_than_k, reverse=True):
+        final_group_list.append(p_anonymized_groups.pop(i))
+
+    print('----- after bigger than k check -----')
+    print('p_anonymized', p_anonymized_groups)
+    print('final_group_list', final_group_list)
+
+    # while the total number of rows in p_anonymized_groups >= k
+    while sum([g.size() for g in p_anonymized_groups]) >= k:
+        index_of_min_vl = min(range(len(p_anonymized_groups)),
+                              key=lambda i: p_anonymized_groups[i].instant_value_loss())
+        group_to_grow = p_anonymized_groups.pop(index_of_min_vl)
+
+        while group_to_grow.size() < k:
+            index_of_other_group = min(
+                range(len(p_anonymized_groups)),
+                key=lambda i: Group.merge_two_groups(group_to_grow, p_anonymized_groups[i]).instant_value_loss())
+            group_to_grow.merge_group(p_anonymized_groups.pop(index_of_other_group))
+
+        final_group_list.append(group_to_grow)
+
+    print('----- after merging -----')
+    print('p_anonymized', p_anonymized_groups)
+    print('final_group_list', final_group_list)
+
+    # add the remaining p_anonymized_groups that were not merged yet into a groups that minimize the instant_value_loss
+    for group in p_anonymized_groups:
+        best_group_to_merge_in_index = min(
+            range(len(final_group_list)),
+            key=lambda i: Group.merge_two_groups(group, final_group_list[i]).instant_value_loss())
+        final_group_list[best_group_to_merge_in_index].merge_group(group)
+
+    print('----- after removing the last items -----')
+    print('p_anonymized', p_anonymized_groups)
+    print('final_group_list', final_group_list)
 
 
 def do_kp_anonymity(path_to_file: str, k: int, p: int, kp_algorithm: str):

@@ -6,6 +6,7 @@ from itertools import combinations
 from typing import Tuple, List
 
 from group import Group, create_empty_group
+from node import Node
 
 
 def compute_ncp(rows: np.array, min_max_diff: np.array) -> float:
@@ -235,3 +236,9 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
     k_anonymity_top_down_postprocessing(less_than_k_anonymized_groups, k_or_more_anonymized_groups, min_max_diff_g, k)
 
     return k_or_more_anonymized_groups
+
+
+def kapra_group_formation(p_anonymized_nodes: List[Node]):
+
+    pass
+
