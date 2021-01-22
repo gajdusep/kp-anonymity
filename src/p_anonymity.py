@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from group import Group
 from node import Node, create_node_from_group, merge_tree_nodes, SAX
-from kp_anonymity import verbose
+from verbose import verbose
 
 def compute_pattern_similarity(N1: Node, N2: Node) -> float:
     """
