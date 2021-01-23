@@ -181,7 +181,7 @@ def k_anonymity_top_down_postprocessing(less_than_k_anonymized_groups, k_or_more
 
             # merge the subgroup that we obtained in the alternative 1
             group_to_pop_tuples = groups_with_more_than_2k_minus_size[min_ncp_alt1_group_index]
-            for combination_index in min_subgroup_indexes:
+            for combination_index in sorted(min_subgroup_indexes, reverse=True):
                 row, row_id = group_to_pop_tuples.pop(combination_index)
                 group_to_anonymize.add_row_to_group(row, row_id)
             k_or_more_anonymized_groups.append(group_to_anonymize)
@@ -245,10 +245,10 @@ def kapra_group_formation(p_anonymized_groups: List[Group], k: int, p: int) -> L
     final_group_list: List[Group] = []
 
     # every group bigger than 2*p must be split
-    for group in p_anonymized_groups:
-        if group.size() > 2 * p:
-            # TODO: split it by top-down clustering
-            continue
+    indices_bigger_than_2p = [i for i, group in enumerate(p_anonymized_groups) if group.size() >= 2*p]
+    for i in sorted(indices_bigger_than_2p, reverse=True):
+        group_to_be_split = p_anonymized_groups.pop(i)
+        p_anonymized_groups.extend(k_anonymity_top_down(group_to_be_split, p))
 
     # if any group is already bigger than k, add it to the final group list
     indices_bigger_than_k = [i for i, group in enumerate(p_anonymized_groups) if group.size() >= k]
