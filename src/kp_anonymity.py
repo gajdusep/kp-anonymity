@@ -251,24 +251,31 @@ def find_index_of_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> i
     # index_of_group_G = list_of_groups.index(G.group_table)
     min_ncp = math.inf
     index_of_group_with_min_ncp = 0
+    min_max_diff = G.get_min_max_diff()
+    print('min max diff :', min_max_diff )
     for i in range(len(list_of_groups)):
-        # if i != index_of_group_G:
+        #if list_of_groups[i].group_table != G.group_table:    
             tmp = create_empty_group()
 
             for j in range(G.size()): 
                 tmp_row = G.get_row_at_index(j)
                 tmp.add_row_to_group(tmp_row)
 
-            for k in range(list_of_groups[i].size()):
-                tmp_row = list_of_groups[i].get_row_at_index(k)
-                tmp.add_row_to_group(tmp_row)    
-            tmp_ncp = compute_ncp(tmp.group_table, tmp.get_min_max_diff())
             
-            if tmp_ncp < min_ncp and tmp_ncp != 0 and tmp_ncp != math.nan:
+            for k in range(list_of_groups[i].size()):
+                tmp_row_2 = list_of_groups[i].get_row_at_index(k)
+                tmp.add_row_to_group(tmp_row_2)
+
+            #min_max_diff = tmp.get_min_max_diff()
+            tmp_ncp = compute_ncp(tmp.group_table, min_max_diff)
+            #print('tmp group: ', tmp.group_table, 'ncp: ', tmp_ncp)   
+
+            
+            if tmp_ncp < min_ncp:
                 min_ncp = tmp_ncp
                 index_of_group_with_min_ncp = i
-                print('index: ', i, 'ncp: ', min_ncp)
-
+                
+    #print('index of group to be merged: ', index_of_group_with_min_ncp, ', ncp: ', min_ncp)
     return index_of_group_with_min_ncp
 
 
@@ -297,32 +304,40 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
     # do k-anonymity on groups
     while find_smallest_group(list_of_groups).size() < k:
         print('Size of smallest group: ', find_smallest_group(list_of_groups).size()) 
-    
+        
         for i in range(len(list_of_groups)):
             if i < len(list_of_groups) and list_of_groups[i].size() < k:
 
                 # merge the group with min ncp
                 print('Round ', i, ': merging groups with min ncp ...')
-
+                
                 index_of_merging_group = find_index_of_group_to_be_merged(list_of_groups[i], list_of_groups)
-                merged_groups = create_empty_group()
-                for j in range(list_of_groups[i].size()):
-                    merged_groups.add_row_to_group(list_of_groups[i].get_row_at_index(j),
-                                                   list_of_groups[i].get_row_id_at_index(j))
-                for z in range(list_of_groups[index_of_merging_group].size()):
-                    merged_groups.add_row_to_group(list_of_groups[index_of_merging_group].get_row_at_index(z),
-                                                   list_of_groups[index_of_merging_group].get_row_id_at_index(z))
-                list_of_groups.append(merged_groups)
-                list_of_groups.pop(i)
-                if i < index_of_merging_group:
-                    list_of_groups.pop(index_of_merging_group - 1)
-                else:
-                    list_of_groups.pop(index_of_merging_group)
+                if i == index_of_merging_group:
+                    print('MERGING GROUP WITH HIMSELF!')
+                else: 
+                    merged_groups = create_empty_group()
+                    for j in range(list_of_groups[i].size()):
+                        merged_groups.add_row_to_group(list_of_groups[i].get_row_at_index(j),
+                                                    list_of_groups[i].get_row_id_at_index(j))
+                    for z in range(list_of_groups[index_of_merging_group].size()):
+                        merged_groups.add_row_to_group(list_of_groups[index_of_merging_group].get_row_at_index(z),
+                                                    list_of_groups[index_of_merging_group].get_row_id_at_index(z))
+                    list_of_groups.append(merged_groups)
+                    list_of_groups.pop(i)
+                    if i < index_of_merging_group:
+                        list_of_groups.pop(index_of_merging_group - 1)
+                    if i > index_of_merging_group:
+                        list_of_groups.pop(index_of_merging_group)
+                    if i == index_of_merging_group:
+                        print('merging group with himself!!!!!!')
+                    '''
+                    print('List updated: ')
+                    for g in range(len(list_of_groups)):
+                        print(list_of_groups[g].group_table, list_of_groups[g].ids)
+                    print('Size of updated list: ', len(list_of_groups))
 
-                print('List updated: ')
-                for g in range(len(list_of_groups)):
-                    print(list_of_groups[g].group_table)
-                print('Size of updated list: ', len(list_of_groups))
+                    '''
+                    
 
             if i < len(list_of_groups) and list_of_groups[i].size() >= k*2:
                 # split group into two parts
@@ -380,7 +395,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, kp_algorithm: str):
     visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    # plt.show()
+    plt.show()
 
     table_group = create_group_from_pandas_df(df)
 
