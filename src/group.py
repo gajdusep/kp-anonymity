@@ -11,7 +11,7 @@ class Group:
     def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], node: 'Node' = None):
         self.group_table = group_table
         self.ids = ids
-        self.node = node
+        self.node = node  # TODO: this should be list of pr_values
     
     def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id"):
         self.ids.append(row_id)

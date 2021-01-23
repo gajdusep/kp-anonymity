@@ -1,12 +1,13 @@
 import argparse
 from enum import Enum
 from typing import DefaultDict, List
+import math
 
 from load_data import *
 from visualize import visualize_intervals
 from group import Group, create_group_from_pandas_df
 from node import Node
-from k_anonymity import k_anonymity_top_down, kapra_group_formation
+from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import setverbose, unsetverbose, getverbose, verbose
 
@@ -21,7 +22,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     elif kp_algorithm == KPAlgorithm.BOTTOMUP:
-        pass  # TODO: k_anonymity_bottom_up
+        anonymized_groups = k_anonymity_bottom_up(table_group, k)
 
     for ag in anonymized_groups:
         print('after the k anonymization:', ag.shape(), '; company codes:', ag.ids)
@@ -65,7 +66,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
         kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
     else:
         kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
-    
+
     # TODO: finish the QI and SD
 
 
@@ -75,7 +76,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-l', '--PR-length', required=False, type=int, default=0)
+    parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
     parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-i', '--input-file', required=False)

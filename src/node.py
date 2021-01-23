@@ -77,8 +77,8 @@ class Node:
         """
         Returns a group containing the member rows of the node
         """
-        return Group(self.table(), self.ids(), self)
-    
+        return Group(self.table(), self.ids(), self)  # TODO: don't pass self, but list of pr_values
+
     def copy(self):
         """
         Returns a copy of the node

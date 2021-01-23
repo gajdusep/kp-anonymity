@@ -113,6 +113,11 @@ def postprocess(leaves_dict: Dict[str, List[Node]]) -> List[Node]:
                 most_similar_good = good
             elif similarity == max_similarity and good.size() < most_similar_good.size():
                 most_similar_good = good
+        # TODO: File "C:\Users\pavel\code\kp-anonymity\src\p_anonymity.py", line 178, in p_anonymity_naive
+        #     return postprocess(create_p_anonymity_tree(group, p, max_level, PR_len))
+        #   File "C:\Users\pavel\code\kp-anonymity\src\p_anonymity.py", line 116, in postprocess
+        #     most_similar_good.members.extend(bad.members)
+        # AttributeError: 'NoneType' object has no attribute 'members'
         most_similar_good.members.extend(bad.members)
 
     return good_leaves
