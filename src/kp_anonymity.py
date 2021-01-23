@@ -1,21 +1,21 @@
 import argparse
 from enum import Enum
-from typing import DefaultDict, List, Dict
+from typing import DefaultDict, List, Dict, final
 
 from load_data import *
-from visualize import visualize_intervals, visualize_p_anonymized_nodes
+from visualize import visualize_envelopes, visualize_p_anonymized_nodes
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import setverbose, unsetverbose, getverbose, verbose
 
-
 class KPAlgorithm(str, Enum):
     TOPDOWN = 'top-down'
     BOTTOMUP = 'bottom-up'
     KAPRA = 'kapra'
 
+show_plots = False
 
 def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     if kp_algorithm == KPAlgorithm.TOPDOWN:
@@ -25,7 +25,10 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
 
     for ag in anonymized_groups:
         print('after the k anonymization:', ag.shape(), '; company codes:', ag.ids)
-    visualize_intervals(anonymized_groups)
+    
+    if show_plots:
+        visualize_envelopes(anonymized_groups)
+
     print('--- final k-anonymized groups:', len(anonymized_groups))
 
     final_nodes: Dict[Group, List[Node]] = {}
@@ -36,7 +39,13 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
         print("Group {} nodes:".format(i))
         for node in final_nodes[ag]:
             print('Node {}: PR "{}", IDs {}'.format(node.id, node.pr, node.row_ids))
-    visualize_p_anonymized_nodes(final_nodes)
+    
+    nodes_list = []
+    for g in final_nodes:
+        nodes_list.extend(final_nodes[g])
+    
+    if show_plots:
+        visualize_p_anonymized_nodes(nodes_list)
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
@@ -73,8 +82,6 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
 
 
 def parse_arguments():
-    # TODO: add parameter - visualize graphs?
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
@@ -84,6 +91,7 @@ def parse_arguments():
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
+    parser.add_argument('-s','--show_plots', required=False, action='store_true')
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']
@@ -109,7 +117,9 @@ def parse_arguments():
         setverbose()
     else:
         unsetverbose()
-    
+    global show_plots
+    show_plots = args['show_plots']
+
     return k, p, PR_len, max_level, algo, input_path, output_path
 
 
