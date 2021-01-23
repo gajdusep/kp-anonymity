@@ -247,24 +247,24 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
 
 # minimize ncp with index
-def find_index_of_group_to_be_merged(G: Group, list_of_groups: List[Group]) -> int:
-    # index_of_group_G = list_of_groups.index(G.group_table)
+def find_index_of_group_to_be_merged(index_to_be_checked: int, list_of_groups: List[Group], min_max_diff) -> int:
     min_ncp = math.inf
     index_of_group_with_min_ncp = 0
-    min_max_diff = G.get_min_max_diff()
-    print('min max diff :', min_max_diff )
+    print('min max diff :', min_max_diff)
     for i in range(len(list_of_groups)):
-        #if list_of_groups[i].group_table != G.group_table:    
-            tmp = create_empty_group()
+        if i == index_to_be_checked:
+            continue
 
-            for j in range(G.size()): 
-                tmp_row = G.get_row_at_index(j)
-                tmp.add_row_to_group(tmp_row)
+        group_to_be_checked = list_of_groups[index_to_be_checked]
+        tmp = create_empty_group()
 
-            
-            for k in range(list_of_groups[i].size()):
-                tmp_row_2 = list_of_groups[i].get_row_at_index(k)
-                tmp.add_row_to_group(tmp_row_2)
+        for j in range(group_to_be_checked.size()):
+            tmp_row = group_to_be_checked.get_row_at_index(j)
+            tmp.add_row_to_group(tmp_row)
+
+        for k in range(list_of_groups[i].size()):
+            tmp_row_2 = list_of_groups[i].get_row_at_index(k)
+            tmp.add_row_to_group(tmp_row_2)
 
             #min_max_diff = tmp.get_min_max_diff()
             tmp_ncp = compute_ncp(tmp.group_table, min_max_diff)
@@ -303,10 +303,10 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
 
     # do k-anonymity on groups
     while find_smallest_group(list_of_groups).size() < k:
-        print('Size of smallest group: ', find_smallest_group(list_of_groups).size()) 
+        print('Number of groups', len(list_of_groups), 'Size of smallest group: ', find_smallest_group(list_of_groups).size())
         
         for i in range(len(list_of_groups)):
-            if i < len(list_of_groups) and list_of_groups[i].size() < k:
+            if list_of_groups[i].size() < k:
 
                 # merge the group with min ncp
                 print('Round ', i, ': merging groups with min ncp ...')
@@ -337,9 +337,8 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
                     print('Size of updated list: ', len(list_of_groups))
 
                     '''
-                    
 
-            if i < len(list_of_groups) and list_of_groups[i].size() >= k*2:
+            if list_of_groups[i].size() >= k*2:
                 # split group into two parts
                 print('Round ', i, ': splitting group with dim > 2k ...')
                 new_group = create_empty_group()
@@ -386,13 +385,13 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, kp_algorithm: str):
 
     # do some preprocessing with the data
     df = remove_rows_with_nan(df)
-    visualize_all_companies(df)
+    # visualize_all_companies(df)
     df = remove_outliers(df, max_stock_value=5000)
-    visualize_all_companies(df)
+    # visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
     df = reduce_dataframe(df, companies_count=20)
-    visualize_all_companies(df)
+    # visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
     plt.show()
