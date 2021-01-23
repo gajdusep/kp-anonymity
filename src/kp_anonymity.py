@@ -1,10 +1,9 @@
 import argparse
 from enum import Enum
-from typing import DefaultDict, List
-import math
+from typing import DefaultDict, List, Dict
 
 from load_data import *
-from visualize import visualize_intervals
+from visualize import visualize_intervals, visualize_p_anonymized_nodes
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
@@ -29,12 +28,15 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
     visualize_intervals(anonymized_groups)
     print('--- final k-anonymized groups:', len(anonymized_groups))
 
-    final_nodes: List[Node] = []
+    final_nodes: Dict[Group, List[Node]] = {}
     for ag in anonymized_groups:
-        final_nodes.extend(p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len))
-    print('--- final nodes:', len(final_nodes))
-    for node in final_nodes:
-        print('Node {}: PR "{}", IDs {}'.format(node.id, node.pr, node.row_ids))
+        final_nodes[ag] = p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len)
+    print('--- final nodes:', sum(len(final_nodes[ag]) for ag in final_nodes))
+    for i, ag in enumerate(final_nodes):
+        print("Group {} nodes:".format(i))
+        for node in final_nodes[ag]:
+            print('Node {}: PR "{}", IDs {}'.format(node.id, node.pr, node.row_ids))
+    visualize_p_anonymized_nodes(final_nodes)
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
