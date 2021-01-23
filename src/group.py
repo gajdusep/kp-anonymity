@@ -1,14 +1,17 @@
 import numpy as np
 import pandas as pd
 import random
+import copy
+
 from typing import Union, Tuple, List
 
 
 class Group:
 
-    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str]):
+    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], node: 'Node' = None):
         self.group_table = group_table
         self.ids = ids
+        self.node = node  # TODO: this should be list of pr_values
     
     def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id"):
         self.ids.append(row_id)
@@ -21,6 +24,15 @@ class Group:
         if self.size() > 0:
             self.ids.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
+
+    def pop(self, index) -> Union[Tuple[np.ndarray, str], None]:
+        if self.size() > 0:
+            popped_id = self.ids.pop()
+            popped_row = self.group_table[index]
+            self.group_table = np.delete(self.group_table, index, axis=0)
+
+            return popped_row, popped_id
+        return None
 
     def merge_group(self, group: 'Group'):
         """
@@ -38,7 +50,9 @@ class Group:
         :param group2: second group
         :return: merged group
         """
-        new_group = Group(group1.group_table, group1.ids)
+        group_table_copy = copy.deepcopy(group1.group_table)
+        group_ids_copy = copy.deepcopy(group1.ids)
+        new_group = Group(group_table_copy, group_ids_copy)
         new_group.merge_group(group2)
         return new_group
 
@@ -66,6 +80,9 @@ class Group:
         table_mins = self.get_mins()
         return table_maxs - table_mins
 
+    def instant_value_loss(self) -> float:
+        return np.sqrt(np.sum(self.get_min_max_diff()) / self.shape()[1])
+
     def get_group_intervals(self):
         table_maxs = self.get_maxes()
         table_mins = self.get_mins()
@@ -80,6 +97,12 @@ class Group:
         if self.group_table is None:
             return 0, 0
         return self.group_table.shape
+
+    def __str__(self):
+        return str(self.ids)
+
+    def __repr__(self):
+        return str(self)
 
 
 def create_empty_group() -> Group:

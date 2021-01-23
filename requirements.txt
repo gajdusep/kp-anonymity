@@ -2,4 +2,4 @@ matplotlib==3.3.3
 pandas==1.1.4
 enum34==1.1.10
 saxpy==1.0.1.dev167
-
+numpy==1.17.3
