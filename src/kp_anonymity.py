@@ -50,8 +50,15 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
     p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
+    verbose("P-anonymized nodes:")
+    for node in p_anonymized_nodes:
+        verbose('Node {}: size {}, PR "{}", IDs: {}'.format(node.id, node.size(), node.pr, node.row_ids))
+    if show_plots:
+        visualize_p_anonymized_nodes(p_anonymized_nodes)
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
     final_group_list = kapra_group_formation(p_anonymized_groups, k, p)
+    if show_plots:
+        visualize_envelopes(final_group_list)
     return final_group_list
 
 
@@ -87,11 +94,11 @@ def parse_arguments():
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
     parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
     parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
-    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
+    parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
+    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
-    parser.add_argument('-s','--show_plots', required=False, action='store_true')
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']

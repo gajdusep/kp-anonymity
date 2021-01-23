@@ -51,14 +51,14 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -
         verbose("{}: {}".format(group.ids[i], row))
     # Initialize nodes list with the starting node, corresponding to the group
     nodes_to_process = [create_node_from_group(group, pr_len)]
-    new_nodes_to_process = True
+    new_nodes_to_process: List[Node] = []
     good_leaves: List[Node] = []
     bad_leaves: List[Node] = []
 
     # Node splitting
-    while new_nodes_to_process:
+    while nodes_to_process:
         verbose("New nodes to process found")
-        new_nodes_to_process = False
+        new_nodes_to_process = []
         for n in nodes_to_process:
             n_id = n.id
             n_size = n.size()
@@ -82,7 +82,6 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -
                 # Split possible
                 else:
                     verbose("Split was successful")
-                    new_nodes_to_process = True
                     TG_nodes: List[Node] = []
                     TB_nodes: List[Node] = []
                     total_TB_size = 0
@@ -96,15 +95,16 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -
                             TG_nodes.append(child)
                             verbose("Node {} is a tentative good node (size: {})".format(child.id, child.size()))
 
-                    nodes_to_process = TG_nodes
+                    new_nodes_to_process.extend(TG_nodes)
 
                     if total_TB_size >= p:
                         verbose("Tentative bad nodes are big enough to be merged")
                         child_merge = merge_child_nodes(TB_nodes)
-                        nodes_to_process.append(child_merge)
+                        new_nodes_to_process.append(child_merge)
                     else:
                         verbose("Tentative bad nodes are not big enough to be merged")
-                        nodes_to_process.extend(TB_nodes)
+                        new_nodes_to_process.extend(TB_nodes)
+        nodes_to_process = new_nodes_to_process
 
     verbose('The "create tree" step produced the following good leaves:\n{}\nand the following bad leaves:\n{}'.format([n.id for n in good_leaves],[n.id for n in bad_leaves]))
     return good_leaves, bad_leaves
@@ -212,7 +212,7 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
                 bad_leaves_by_level[merged_leaf.level].append(merged_leaf)
         current_level -= 1
 
-    print(str(bad_rows) + " were suppressed: they could not be merged")
+    print(str(bad_rows) + " rows were suppressed: they could not be merged")
     return good_leaves
 
 def p_anonymity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
