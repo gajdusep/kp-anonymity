@@ -1,3 +1,4 @@
+import time
 import argparse
 from enum import Enum
 from typing import DefaultDict, List, Dict, final
@@ -131,6 +132,8 @@ def parse_arguments():
 
 
 if __name__ == "__main__":
+    start_time = time.time()
+
     k, p, PR_len, max_level, algo, input_path, output_path = parse_arguments()
     print("p-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={},\
         output_path={}, verbose={}".format(
@@ -141,4 +144,9 @@ if __name__ == "__main__":
     if k < 2 * p:
         print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")
+
     do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+
+    end_time = time.time() - start_time
+    print("The program ran for: {} seconds".format(end_time))
+    
