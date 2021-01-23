@@ -34,7 +34,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
         final_nodes.extend(p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len))
     print('--- final nodes:', len(final_nodes))
     for node in final_nodes:
-        print(node.ids(), node.PR, node.group.ids)
+        print('Node {}: PR "{}", IDs {}'.format(node.id, node.pr, node.row_ids))
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
@@ -116,5 +116,10 @@ if __name__ == "__main__":
     print("p-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={},\
         output_path={}, verbose={}".format(
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    if k < p:
+        print("ERROR: k must be larger than P")
+        exit()
+    if k < 2 * p:
+        print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")
     do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
