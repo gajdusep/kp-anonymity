@@ -8,6 +8,7 @@ from saxpy.sax import ts_to_string
 from group import Group
 from verbose import verbose
 
+
 class Node:
     """
     Attributes:
@@ -99,6 +100,10 @@ class Node:
         verbose("Creating copy of node {}".format(self.id))
         return Node(self.table, self.row_ids, self.level, self.pr)
 
+    def __str__(self):
+        return 'Node {}: size {}, PR "{}", IDs: {}'.format(self.id, self.size(), self.pr, self.row_ids)
+
+
 def create_node_from_group(group: Group, pr_len: int) -> Node:
     verbose("Creating node from group")
     level = 1
@@ -108,6 +113,7 @@ def create_node_from_group(group: Group, pr_len: int) -> Node:
         pr = "a" * len(group.get_row_at_index(0))
     return Node(group.group_table, group.ids, level, pr)
 
+
 def merge_child_nodes(nodes: List[Node]) -> Node:
     """
     Merges child nodes with the same parent
@@ -115,13 +121,14 @@ def merge_child_nodes(nodes: List[Node]) -> Node:
     The merged node will have the same PR as the parent of the merging nodes
     """
     verbose("Merging child nodes with ids {}".format([n.id for n in nodes]))
-    table: List[np.ndarray] = np.vstack([n.table for n in nodes])
+    table: np.ndarray = np.vstack([n.table for n in nodes])
     row_ids: List[str] = []
     for n in nodes:
         row_ids.extend(n.row_ids)
     level = nodes[0].level - 1
     pr = SAX(table[0], level, nodes[0].pr_len())
     return Node(table, row_ids, level, pr)
+
 
 def SAX(sequence: np.ndarray, alphabet_size: int, length: int = 0) -> str:
     """

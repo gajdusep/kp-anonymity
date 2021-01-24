@@ -4,6 +4,7 @@ from group import Group
 from node import Node, create_node_from_group, merge_child_nodes, SAX
 from verbose import verbose
 
+
 def compute_pattern_similarity(n1: Node, n2: Node) -> float:
     """
     Calculate the similarity between two pattern representations as a value between 0 and 1.
@@ -33,6 +34,7 @@ def compute_pattern_similarity(n1: Node, n2: Node) -> float:
     sim = 1 - diff
     verbose("Computed similarity: {}".format(sim))
     return sim
+
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -> Dict[str, List[Node]]:
     """
@@ -109,6 +111,7 @@ def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -
     verbose('The "create tree" step produced the following good leaves:\n{}\nand the following bad leaves:\n{}'.format([n.id for n in good_leaves],[n.id for n in bad_leaves]))
     return good_leaves, bad_leaves
 
+
 def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
     """
     The postprocessing phase takes care of the bad leaves integrating them into the good leaves.
@@ -148,6 +151,7 @@ def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
     for n in good_leaves:
         verbose('Node {}: size {}, level {}, PR "{}", ids {}'.format(n.id, n.size(), n.level, n.pr, n.row_ids))
     return good_leaves
+
 
 def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) -> List[Node]:
     """
@@ -215,11 +219,13 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
     print(str(bad_rows) + " rows were suppressed: they could not be merged")
     return good_leaves
 
+
 def p_anonymity_naive(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
     """
     The list of processed nodes is returned. Those can then be used to rebuild the table rows.
     """
     return postprocess(*create_p_anonymity_tree(group, p, max_level, PR_len))
+
 
 def p_anonymity_kapra(group: Group, p: int, max_level: int, PR_len: int) -> List[Node]:
     """

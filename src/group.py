@@ -8,7 +8,7 @@ from typing import Union, Tuple, List
 
 class Group:
 
-    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[str] = None):
+    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[str] = []):
         self.group_table = group_table
         self.ids = ids
         self.pr_values = pr_values
@@ -41,6 +41,7 @@ class Group:
         """
         self.group_table = np.concatenate((self.group_table, group.group_table), axis=0)
         self.ids.extend(group.ids)
+        self.pr_values.extend(group.pr_values)
 
     @staticmethod
     def merge_two_groups(group1: 'Group', group2: 'Group') -> 'Group':
@@ -52,7 +53,8 @@ class Group:
         """
         group_table_copy = copy.deepcopy(group1.group_table)
         group_ids_copy = copy.deepcopy(group1.ids)
-        new_group = Group(group_table_copy, group_ids_copy)
+        group_pr_copy = copy.deepcopy(group1.pr_values)
+        new_group = Group(group_table_copy, group_ids_copy, group_pr_copy)
         new_group.merge_group(group2)
         return new_group
 
