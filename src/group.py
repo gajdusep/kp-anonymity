@@ -29,8 +29,8 @@ class Group:
 
     def pop_row(self, index) -> Union[Tuple[np.ndarray, str, str], None]:
         if self.size() > 0:
-            popped_id = self.ids.pop()
-            popped_pr_value = self.pr_values.pop()
+            popped_id = self.ids.pop(index)
+            popped_pr_value = self.pr_values.pop(index)
             popped_row = self.group_table[index]
             self.group_table = np.delete(self.group_table, index, axis=0)
 

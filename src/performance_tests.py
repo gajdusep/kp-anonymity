@@ -29,8 +29,10 @@ def run_all_tests():
     setverbose()
 
     k_values = [3, 4, 5, 6, 7, 8, 9, 10]
+    # k_values = [5]
     # k_values = [9, 10]
-    p_values = [2, 3, 4, 5]
+    # p_values = [2, 3, 4, 5]
+    p_values = [2]
     # p_values = [2, 3, 4, 5]
     # p_values = [3, 4]
     pr_len = 4
@@ -40,6 +42,7 @@ def run_all_tests():
     df = load_data_from_file(path_to_file)
     df = remove_rows_with_nan(df)
     df = remove_outliers(df, max_stock_value=5000)
+    df = reduce_dataframe(df, companies_count=50, attributes_count=20)
     # df = reduce_dataframe(df, companies_count=30)
 
     group = create_group_from_pandas_df(df)
@@ -49,7 +52,8 @@ def run_all_tests():
     bottomup_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
 
     times = pd.DataFrame(columns=k_values, index=p_values)
-
+    # TODO: remove verbose()
+    # setverbose()
     for k in k_values:
         for p in p_values:
             # TODO: if line 24 is commented, it crashes.. why..?

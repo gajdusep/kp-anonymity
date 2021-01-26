@@ -90,7 +90,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
     # visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
-    df = reduce_dataframe(df, companies_count=30)
+    df = reduce_dataframe(df, companies_count=50, attributes_count=20)
     # visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
