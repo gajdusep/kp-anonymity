@@ -1,40 +1,65 @@
 from typing import Dict, List
-
+import numpy as np
 from group import Group
 from node import Node, create_node_from_group, merge_child_nodes, SAX
 from verbose import verbose, debug
 
 
-def compute_pattern_similarity(n1: Node, n2: Node) -> float:
-    """
-    Calculate the similarity between two pattern representations as a value between 0 and 1.
-    The difference is here defined as the average of the normalized distances (normalized over the number of levels)
-    between the two characters in the same position of the two PRs.
-    The similarity is 1 - difference.
-    """
-    debug('Computing similarity of patterns "{}" (node {}, level {}) and "{}" (node {}, level {})'.format(n1.pr, n1.id, n1.level, n2.pr, n2.level, n2.id))
-    if n1.pr_len() != n2.pr_len():
-        raise ValueError("Pattern similarity cannot be computed on PR of different lengths")
+# def compute_pattern_similarity_old(n1: Node, n2: Node) -> float:
+#     """
+#     Calculate the similarity between two pattern representations as a value between 0 and 1.
+#     The difference is here defined as the average of the normalized distances (normalized over the number of levels)
+#     between the two characters in the same position of the two PRs.
+#     The similarity is 1 - difference.
+#     """
+#     debug('Computing similarity of patterns "{}" (node {}, level {}) and "{}" (node {}, level {})'.format(n1.pr, n1.id, n1.level, n2.pr, n2.level, n2.id))
+#     if n1.pr_len() != n2.pr_len():
+#         raise ValueError("Pattern similarity cannot be computed on PR of different lengths")
     
-    diff = 0
-    if n1.level == 1 or n2.level == 1:
-        if n1.level == n2.level:
+#     diff = 0
+#     if n1.level == 1 or n2.level == 1:
+#         if n1.level == n2.level:
+#             return 1
+#         else:
+#             return 0
+#     elif n1.level == n2.level:
+#         for i in range(len(n1.pr)):
+#             diff += abs(ord(n1.pr[i]) - ord(n2.pr[i])) / (n1.level - 1)
+#     else:
+#         # If the two PRs are of different levels, their values are normalized separately
+#         for i in range(len(n1.pr)):
+#             diff += abs((ord(n1.pr[i]) - 97) / (n1.level - 1) - (ord(n2.pr[i]) - 97) / (n2.level - 1))
+    
+#     diff = diff / len(n1.pr)
+#     sim = 1 - diff
+#     debug("Computed similarity: {}".format(sim))
+#     return sim
+
+def pattern_representation_to_numpy_array(pr: str) -> np.ndarray:
+    arr = np.array([ord(c) - 97 for c in pr])
+    return arr
+
+def compute_pattern_similarity(pr1: str, pr2: str) -> float:
+    """
+    Calculates the cosine similarity between two pattern representations as a value between -1 and 1.
+    """
+
+    debug('Computing similarity of patterns "{}" and "{}"'.format(pr1, pr2))
+    if len(pr1) != len(pr2):
+        raise ValueError("Pattern similarity cannot be computed on PRs of different lengths")
+
+    arr1 = pattern_representation_to_numpy_array(pr1)
+    arr2 = pattern_representation_to_numpy_array(pr2)
+    norm1 = np.linalg.norm(arr1)
+    norm2 = np.linalg.norm(arr2)
+
+    if norm1 == 0 or norm2 == 0:
+        if norm1 == norm2:
             return 1
         else:
-            return 0
-    elif n1.level == n2.level:
-        for i in range(len(n1.pr)):
-            diff += abs(ord(n1.pr[i]) - ord(n2.pr[i])) / (n1.level - 1)
-    else:
-        # If the two PRs are of different levels, their values are normalized separately
-        for i in range(len(n1.pr)):
-            diff += abs((ord(n1.pr[i]) - 97) / (n1.level - 1) - (ord(n2.pr[i]) - 97) / (n2.level - 1))
-    
-    diff = diff / len(n1.pr)
-    sim = 1 - diff
-    debug("Computed similarity: {}".format(sim))
-    return sim
+            return -1
 
+    return np.dot(arr1, arr2)/(norm1*norm2)
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -> Dict[str, List[Node]]:
     """
@@ -127,7 +152,7 @@ def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
         verbose("Only 1 good leaf (node {}): adding all bad leaf rows to the only good leaf".format(good.id))
         for bad in bad_leaves:
             debug("Processing bad leaf {}".format(bad.id))
-            debug("Similarity to good node: {})".format(compute_pattern_similarity(bad, good)))
+            debug("Similarity to good node: {})".format(compute_pattern_similarity(bad.pr, good.pr)))
             good.extend_table_with_node(bad)
     else:
         verbose("Starting postprocessing phase")
@@ -137,7 +162,7 @@ def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
             max_similarity = None
             most_similar_good = None
             for good in good_leaves:
-                similarity = compute_pattern_similarity(bad, good)
+                similarity = compute_pattern_similarity(bad.pr, good.pr)
                 if max_similarity is None or similarity > max_similarity:
                     max_similarity = similarity
                     most_similar_good = good
@@ -220,9 +245,9 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
         current_level -= 1
 
     if bad_rows == 0:
-        print("No rows were suppressed")
+        verbose('No rows were suppressed in the "recycle bad leaves" phase')
     else:
-        print(str(bad_rows) + " rows were suppressed: they could not be merged")
+        verbose(str(bad_rows) + ' rows were suppressed in the "recycle bad leaves" phase: they could not be merged')
     
     verbose('The "recycle bad leaves" phase produced the following good leaves:')
     for n in good_leaves:

@@ -8,17 +8,17 @@ from p_anonymity import compute_pattern_similarity, p_anonymity_naive
 
 
 def test_compute_pattern_similarity():
-    Nodes = [
-        Node(None, None, 3, "aabca"),
-        Node(None, None, 3, "abbca"),
-        Node(None, None, 3, "abcba"),
-        Node(None, None, 5, "aacea"),
-        Node(None, None, 5, "acdeb"),
-        Node(None, None, 1, "aaaaa")
+    prs = [
+        "aabca",
+        "abbca",
+        "abcba",
+        "aacea",
+        "acdeb",
+        "aaaaa"
     ]
-    for n in range(len(Nodes)):
-        print(compute_pattern_similarity(Nodes[0], Nodes[n]))
-    print(compute_pattern_similarity(Nodes[-1], Nodes[-1]))
+    for n in range(len(prs)):
+        print(compute_pattern_similarity(prs[0], prs[n]))
+    print(compute_pattern_similarity(prs[-1], prs[-1]))
     return
 
 
