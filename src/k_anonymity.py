@@ -316,6 +316,12 @@ def find_smallest_group_index(list_of_groups: List[Group]) -> int:
         range(len(list_of_groups)),
         key=lambda i: list_of_groups[i].size())
 
+def find_biggest_group(list_of_groups: List[Group]) -> Group:
+    return max(list_of_groups,  key=lambda group: group.size())
+
+def find_biggest_group_index(list_of_groups: List[Group]) -> int:
+    return max(range(len(list_of_groups)), key=lambda i: list_of_groups[i].size())
+
 
 # k-anonymity bottom-up method
 def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
@@ -344,19 +350,45 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
 
             index_of_merging_group = find_index_of_group_to_be_merged(group_to_check, list_of_groups, min_max_diff)
             list_of_groups[index_of_merging_group].merge_group(group_to_check)
-
-        # for i in range(len(list_of_groups)):
-        #     if list_of_groups[i].size() >= k * 2:
-        #         # split group into two parts
-        #         print('Round ', i, ': splitting group with dim > 2k ...')
-        #         new_group = create_empty_group()
-        #         h = 0
-        #         while h < k:
-        #             # TODO: implement pop(?)
-        #             row_to_separate = list_of_groups[i].pop(h)  # add method to eliminate a row and return it
-        #             id_row_to_separate = list_of_groups[i].get_row_id_at_index(h)
-        #             new_group.add_row_to_group(row_to_separate, id_row_to_separate)
-        #             i += 1
-        #         list_of_groups.append(new_group)
+    
+    biggest_group = find_biggest_group(list_of_groups)
+    
+    if biggest_group.size() >= 2*k:
+        list_of_groups_to_be_splitted = []
+        i = len(list_of_groups) - 1
+        j = 0
+        while i != -1:
+            if list_of_groups[i].size() >= 2*k:
+                list_of_groups_to_be_splitted.append(list_of_groups.pop(i))
+                
+                j += 1
+            i -= 1
+        print('Groups to split: ', list_of_groups_to_be_splitted)
+        
+        h = len(list_of_groups_to_be_splitted) - 1
+        while h != -1:
+            group_to_be_split = list_of_groups_to_be_splitted.pop(h)
+            print('Current splitting group: ',group_to_be_split)
+            parts_into_split = int(group_to_be_split.size()/k)
+            print('Parts into group has to be split: ', parts_into_split)
+            dim_of_splitted_parts = int(group_to_be_split.size()/parts_into_split)
+            print('Dimension of parts into the group has to be split: ', dim_of_splitted_parts)
+            
+            p = 0
+            
+            while p < parts_into_split:
+                index = group_to_be_split.size() - 1
+                splitted_group = create_empty_group()
+                g = 0
+                while g < dim_of_splitted_parts:
+                    splitted_group.add_row_to_group(group_to_be_split.get_row_at_index(index), group_to_be_split.get_row_id_at_index(index))
+                    group_to_be_split.pop(index)
+                    print('Splitting group: ', splitted_group, ',at index: ', index)
+                    g += 1
+                    index -= 1
+                list_of_groups.append(splitted_group)
+                p += 1
+            h -= 1
+        print('Updated list (after splitting): ' ,len(list_of_groups), ' ',list_of_groups)
 
     return list_of_groups
