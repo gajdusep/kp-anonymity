@@ -21,7 +21,7 @@ class KPAlgorithm(str, Enum):
 show_plots = False
 
 
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str) -> List[Group]:
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     else:  # kp_algorithm == KPAlgorithm.BOTTOMUP - no other option should get here
@@ -38,11 +38,17 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
     for ag in anonymized_groups:
         final_nodes[ag] = p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len)
 
-    print('--- number of final nodes:', sum(len(final_nodes[ag]) for ag in final_nodes))
+    verbose('--- number of final nodes: {}'.format(sum(len(final_nodes[ag]) for ag in final_nodes)))
     for i, ag in enumerate(final_nodes):
-        print("Group {} nodes:".format(i))
+        verbose("Group {} nodes: {} {}".format(i, ag.pr_values, ag.ids))
+        id_to_pr_value_dict = {}
         for node in final_nodes[ag]:
-            print('   ' + str(node))
+            for row_id in node.row_ids:
+                id_to_pr_value_dict[row_id] = node.pr
+            verbose('   ' + str(node))
+        for j, group_row_id in enumerate(ag.ids):
+            ag.pr_values[j] = id_to_pr_value_dict[group_row_id]
+        verbose("  -- Group pr values added: {}".format(ag.pr_values))
     
     nodes_list = []
     for g in final_nodes:
@@ -51,22 +57,24 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
     if show_plots:
         visualize_p_anonymized_nodes(nodes_list)
 
+    return anonymized_groups
+
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
     p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
 
-    print("--- kapra: P-anonymized nodes:")
+    verbose("--- kapra: P-anonymized nodes:")
     for node in p_anonymized_nodes:
-        print('  ' + str(node))
+        verbose('  {}'.format(node))
     if show_plots:
         visualize_p_anonymized_nodes(p_anonymized_nodes)
 
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
 
     final_group_list = kapra_group_formation(p_anonymized_groups, k, p)
-    print("--- kapra: k-anonymized groups:")
+    verbose("--- kapra: k-anonymized groups:")
     for ag in final_group_list:
-        print('  ', ag.ids, ag.pr_values)
+        verbose('  {}, {}'.format(ag.ids, ag.pr_values))
 
     if show_plots:
         visualize_envelopes(final_group_list)
