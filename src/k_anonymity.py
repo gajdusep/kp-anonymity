@@ -329,24 +329,20 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
             index_of_merging_group = find_index_of_group_to_be_merged(group_to_check, list_of_groups, min_max_diff)
             list_of_groups[index_of_merging_group].merge_group(group_to_check)
     
-    biggest_group = find_biggest_group(list_of_groups)
-    
-    if biggest_group.size() >= 2*k:
-        list_of_groups_to_be_splitted = []
-        i = len(list_of_groups) - 1
-        j = 0
-        while i != -1:
-            if list_of_groups[i].size() >= 2*k:
-                list_of_groups_to_be_splitted.append(list_of_groups.pop(i))
-                
-                j += 1
-            i -= 1
-        print('Groups to split: ', list_of_groups_to_be_splitted)
-        
+    # biggest_group = find_biggest_group(list_of_groups)
+
+    list_of_groups_to_be_splitted = []
+    for i in reversed(range(len(list_of_groups))):
+        if list_of_groups[i].size() >= 2 * k:
+            list_of_groups_to_be_splitted.append(list_of_groups.pop(i))
+
+    print('Groups to split: ', list_of_groups_to_be_splitted)
+
+    if len(list_of_groups_to_be_splitted) > 0:
         h = len(list_of_groups_to_be_splitted) - 1
         while h != -1:
             group_to_be_split = list_of_groups_to_be_splitted.pop(h)
-            print('Current splitting group: ',group_to_be_split)
+            print('Current splitting group: ', group_to_be_split)
             parts_into_split = int(group_to_be_split.size()/k)
             print('Parts into group has to be split: ', parts_into_split)
             dim_of_splitted_parts = int(group_to_be_split.size()/parts_into_split)
@@ -359,14 +355,15 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
                 splitted_group = create_empty_group()
                 g = 0
                 while g < dim_of_splitted_parts:
-                    splitted_group.add_row_to_group(group_to_be_split.get_row_at_index(index), group_to_be_split.get_row_id_at_index(index))
-                    group_to_be_split.pop(index)
+                    row, row_id, row_pr_val = group_to_be_split.get_all_attrs_at_index(index)
+                    splitted_group.add_row_to_group(row, row_id, row_pr_val)
+                    group_to_be_split.pop_row(index)
                     print('Splitting group: ', splitted_group, ',at index: ', index)
                     g += 1
                     index -= 1
                 list_of_groups.append(splitted_group)
                 p += 1
             h -= 1
-        print('Updated list (after splitting): ' ,len(list_of_groups), ' ',list_of_groups)
+        print('Updated list (after splitting): ', len(list_of_groups), ' ',list_of_groups)
 
     return list_of_groups
