@@ -186,12 +186,8 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
     while bad_rows >= p:
         verbose("{} bad rows to process".format(bad_rows))
         verbose("Processing bad leaves of level {}:".format(current_level))
-        # TODO: error: File "C:\Users\pavel\code\kp-anonymity\src\p_anonymity.py", line 183, in recycle_bad_leaves
-        #     for n in bad_leaves_by_level[current_level]:
-        #  KeyError: 2
         for n in bad_leaves_by_level[current_level]:
             verbose('Leaf {}: size {}, pr "{}"'.format(n.id, n.size(), n.pr))
-        merged_leaves: List[Node] = []
         leaves_by_pr: Dict[str, Node] = {}
         for bad_leaf in bad_leaves_by_level[current_level]:
             if bad_leaf.pr not in leaves_by_pr:
@@ -202,27 +198,24 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
                 merging_leaf = leaves_by_pr[bad_leaf.pr]
                 verbose('Merging leaf {} to leaf {} (PR: "{}")'.format(bad_leaf.id, merging_leaf.id, merging_leaf.pr))
                 merging_leaf.extend_table_with_node(bad_leaf)
-                if merging_leaf not in merged_leaves:
-                    verbose('Leaf {} is a merged leaf (PR: "{}")'.format(merging_leaf.id, merging_leaf.pr))
-                    merged_leaves.append(merging_leaf)
         
-        verbose("The following merged leaves were produced:")
-        for merged_leaf in merged_leaves:
-            verbose("Merged leaf {}: size {}, ids {}".format(merged_leaf.id, merged_leaf.size(), merged_leaf.row_ids))
-
-        for merged_leaf in merged_leaves:
-            # If the merged leaf is not smaller than p, then it is a good leaf
-            if merged_leaf.size() >= p:
-                good_leaves.append(merged_leaf)
-                bad_rows -= merged_leaf.size()
-                verbose("Merged leaf {} is a good leaf, {} bad rows remaining".format(merged_leaf.id, bad_rows))
+        verbose("The following leaves were produced:")
+        for leaf in leaves_by_pr.values():
+            verbose("Leaf {}: size {}, ids {}".format(leaf.id, leaf.size(), leaf.row_ids))
+        
+        for leaf in leaves_by_pr.values():
+            # If the leaf is not smaller than p, then it is a good leaf
+            if leaf.size() >= p:
+                good_leaves.append(leaf)
+                bad_rows -= leaf.size()
+                verbose("Leaf {} is a good leaf, {} bad rows remaining".format(leaf.id, bad_rows))
             # Otherwise its level is decreased and it will be checked in the next step for a possible merge
             else:
-                verbose("Merged leaf {} is a bad leaf: its SAX level is decreased".format(merged_leaf.id, bad_rows))
-                merged_leaf.level -= 1
-                row = merged_leaf.table[0]
-                merged_leaf.pr = SAX(row, merged_leaf.level, merged_leaf.pr_len())
-                bad_leaves_by_level[merged_leaf.level].append(merged_leaf)
+                verbose("Leaf {} is a bad leaf: its SAX level is decreased".format(leaf.id, bad_rows))
+                leaf.level -= 1
+                row = leaf.table[0]
+                leaf.pr = SAX(row, leaf.level, leaf.pr_len())
+                bad_leaves_by_level[leaf.level].append(leaf)
         current_level -= 1
 
     print(str(bad_rows) + " rows were suppressed: they could not be merged")

@@ -16,7 +16,7 @@ def run_all_tests():
 
     k_values = [3, 4, 5, 6, 7, 8, 9, 10]
     # k_values = [9, 10]
-    p_values = [3, 4, 5]
+    p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
     # p_values = [3, 4]
     pr_len = 4
