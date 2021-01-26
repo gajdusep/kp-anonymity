@@ -148,6 +148,7 @@ def parse_arguments():
     
     if args['debug']:
         setdebug()
+        setverbose()
     else:
         unsetdebug()
     
