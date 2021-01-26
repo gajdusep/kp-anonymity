@@ -9,7 +9,7 @@ from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
-from verbose import setverbose, unsetverbose, getverbose, verbose
+from verbose import *
 
 
 class KPAlgorithm(str, Enum):
@@ -119,6 +119,7 @@ def parse_arguments():
     parser.add_argument('-o', '--output-file', required=False)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
+    parser.add_argument('-d', '--debug', required=False, action='store_true')
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']
@@ -144,6 +145,12 @@ def parse_arguments():
         setverbose()
     else:
         unsetverbose()
+    
+    if args['debug']:
+        setdebug()
+    else:
+        unsetdebug()
+    
     global show_plots
     show_plots = args['show_plots']
 
@@ -164,6 +171,7 @@ if __name__ == "__main__":
     if k < 2 * p:
         print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")
+    debug("Debug output enabled")
 
     do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
 
