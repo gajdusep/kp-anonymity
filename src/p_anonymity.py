@@ -175,6 +175,12 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
         verbose("Level {} bad leaves: {}".format(level, [n.id for n in bad_leaves_by_level[level]]))
     
     current_level = max(bad_leaves_by_level)
+
+    # Adding empty lists for levels with no leaves to prevent errors
+    for level in range(current_level):
+        if level not in bad_leaves_by_level:
+            bad_leaves_by_level[level] = []
+
     verbose("Maximum bad leaf level: {}".format(current_level))
     bad_rows = sum(bad_leaf.size() for bad_leaf in bad_leaves)
     while bad_rows >= p:
