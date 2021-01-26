@@ -62,6 +62,7 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
         visualize_p_anonymized_nodes(p_anonymized_nodes)
 
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
+
     final_group_list = kapra_group_formation(p_anonymized_groups, k, p)
     print("--- kapra: k-anonymized groups:")
     for ag in final_group_list:
