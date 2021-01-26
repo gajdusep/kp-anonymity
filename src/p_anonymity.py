@@ -186,6 +186,9 @@ def recycle_bad_leaves(good_leaves: List[Node], bad_leaves: List[Node], p: int) 
     while bad_rows >= p:
         verbose("{} bad rows to process".format(bad_rows))
         verbose("Processing bad leaves of level {}:".format(current_level))
+        # TODO: error: File "C:\Users\pavel\code\kp-anonymity\src\p_anonymity.py", line 183, in recycle_bad_leaves
+        #     for n in bad_leaves_by_level[current_level]:
+        #  KeyError: 2
         for n in bad_leaves_by_level[current_level]:
             verbose('Leaf {}: size {}, pr "{}"'.format(n.id, n.size(), n.pr))
         merged_leaves: List[Node] = []
