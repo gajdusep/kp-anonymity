@@ -1,10 +1,10 @@
+import time
 import argparse
 from enum import Enum
-from typing import DefaultDict, List
-import math
+from typing import List, Dict
 
 from load_data import *
-from visualize import visualize_intervals
+from visualize import visualize_envelopes, visualize_p_anonymized_nodes
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
@@ -18,29 +18,67 @@ class KPAlgorithm(str, Enum):
     KAPRA = 'kapra'
 
 
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
+show_plots = False
+
+
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str) -> List[Group]:
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
-    elif kp_algorithm == KPAlgorithm.BOTTOMUP:
+    else:  # kp_algorithm == KPAlgorithm.BOTTOMUP - no other option should get here
         anonymized_groups = k_anonymity_bottom_up(table_group, k)
 
+    verbose('--- ' + kp_algorithm + ' is finished. Obtained' + str(len(anonymized_groups)) + 'groups')
     for ag in anonymized_groups:
-        print('after the k anonymization:', ag.shape(), '; company codes:', ag.ids)
-    visualize_intervals(anonymized_groups)
-    print('--- final k-anonymized groups:', len(anonymized_groups))
+        verbose('   -- shape:' + str(ag.shape()) + str('; company codes:') + str(ag.ids))
+    
+    if show_plots:
+        visualize_envelopes(anonymized_groups)
 
-    final_nodes: List[Node] = []
+    final_nodes: Dict[Group, List[Node]] = {}
     for ag in anonymized_groups:
-        final_nodes.extend(p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len))
-    print('--- final nodes:', len(final_nodes))
-    for node in final_nodes:
-        print(node.ids(), node.PR, node.group.ids)
+        final_nodes[ag] = p_anonymity_naive(group=ag, p=p, max_level=max_level, PR_len=PR_len)
+
+    verbose('--- number of final nodes: {}'.format(sum(len(final_nodes[ag]) for ag in final_nodes)))
+    for i, ag in enumerate(final_nodes):
+        verbose("Group {} nodes: {} {}".format(i, ag.pr_values, ag.ids))
+        id_to_pr_value_dict = {}
+        for node in final_nodes[ag]:
+            for row_id in node.row_ids:
+                id_to_pr_value_dict[row_id] = node.pr
+            verbose('   ' + str(node))
+        for j, group_row_id in enumerate(ag.ids):
+            ag.pr_values[j] = id_to_pr_value_dict[group_row_id]
+        verbose("  -- Group pr values added: {}".format(ag.pr_values))
+    
+    nodes_list = []
+    for g in final_nodes:
+        nodes_list.extend(final_nodes[g])
+    
+    if show_plots:
+        visualize_p_anonymized_nodes(nodes_list)
+
+    return anonymized_groups
 
 
 def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_level: int):
     p_anonymized_nodes: List[Node] = p_anonymity_kapra(group=table_group, p=p, max_level=max_level, PR_len=PR_len)
+
+    verbose("--- kapra: P-anonymized nodes:")
+    for node in p_anonymized_nodes:
+        verbose('  {}'.format(node))
+    if show_plots:
+        visualize_p_anonymized_nodes(p_anonymized_nodes)
+
     p_anonymized_groups: List[Group] = [node.to_group() for node in p_anonymized_nodes]
+
     final_group_list = kapra_group_formation(p_anonymized_groups, k, p)
+    verbose("--- kapra: k-anonymized groups:")
+    for ag in final_group_list:
+        verbose('  {}, {}'.format(ag.ids, ag.pr_values))
+
+    if show_plots:
+        visualize_envelopes(final_group_list)
+
     return final_group_list
 
 
@@ -59,7 +97,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
     # plt.show()
 
     table_group = create_group_from_pandas_df(df)
-    print('table created from out data:', table_group.shape(), table_group.ids)
+    print('Table created: {} {}\n-----------------'.format(table_group.shape(), table_group.ids))
 
     # TODO: kp_anonymity_classic and also kp_anonymity_kapra should return something to be for example saved to the file
     if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
@@ -71,16 +109,15 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
 
 
 def parse_arguments():
-    # TODO: add parameter - visualize graphs?
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
     parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
     parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
-    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
+    parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=False)
     parser.add_argument('-o', '--output-file', required=False)
+    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
     args = vars(parser.parse_args())
 
@@ -107,14 +144,28 @@ def parse_arguments():
         setverbose()
     else:
         unsetverbose()
-    
+    global show_plots
+    show_plots = args['show_plots']
+
     return k, p, PR_len, max_level, algo, input_path, output_path
 
 
 if __name__ == "__main__":
+    start_time = time.time()
+
     k, p, PR_len, max_level, algo, input_path, output_path = parse_arguments()
-    print("p-anonymity with the following parameters: k={}, p={}, PR_len={}, max_level={}, algo={}, input_path={},\
-        output_path={}, verbose={}".format(
+
+    print("\n-----------------\nkp-anonymity with the following parameters: \nk={} p={}\nPR_len={}\n"
+          "max_level={}\nalgo={}\ninput_path={}\noutput_path={}\nverbose={}\n-----------------".format(
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    if k < p:
+        print("ERROR: k must be larger than P")
+        exit()
+    if k < 2 * p:
+        print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")
+
     do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+
+    end_time = time.time() - start_time
+    print("The program ran for: {} seconds".format(end_time))

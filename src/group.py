@@ -8,13 +8,14 @@ from typing import Union, Tuple, List
 
 class Group:
 
-    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], node: 'Node' = None):
+    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[str] = []):
         self.group_table = group_table
         self.ids = ids
-        self.node = node  # TODO: this should be list of pr_values
+        self.pr_values = pr_values
     
-    def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id"):
+    def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id", pr_value: str = "no_pr"):
         self.ids.append(row_id)
+        self.pr_values.append(pr_value)
         if self.group_table is None:
             self.group_table = row.reshape(1, row.shape[0])
         else:
@@ -23,15 +24,17 @@ class Group:
     def delete_last_added_row(self):
         if self.size() > 0:
             self.ids.pop()
+            self.pr_values.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
 
-    def pop(self, index) -> Union[Tuple[np.ndarray, str], None]:
+    def pop_row(self, index) -> Union[Tuple[np.ndarray, str, str], None]:
         if self.size() > 0:
             popped_id = self.ids.pop()
+            popped_pr_value = self.pr_values.pop()
             popped_row = self.group_table[index]
             self.group_table = np.delete(self.group_table, index, axis=0)
 
-            return popped_row, popped_id
+            return popped_row, popped_id, popped_pr_value
         return None
 
     def merge_group(self, group: 'Group'):
@@ -41,6 +44,7 @@ class Group:
         """
         self.group_table = np.concatenate((self.group_table, group.group_table), axis=0)
         self.ids.extend(group.ids)
+        self.pr_values.extend(group.pr_values)
 
     @staticmethod
     def merge_two_groups(group1: 'Group', group2: 'Group') -> 'Group':
@@ -52,7 +56,8 @@ class Group:
         """
         group_table_copy = copy.deepcopy(group1.group_table)
         group_ids_copy = copy.deepcopy(group1.ids)
-        new_group = Group(group_table_copy, group_ids_copy)
+        group_pr_copy = copy.deepcopy(group1.pr_values)
+        new_group = Group(group_table_copy, group_ids_copy, group_pr_copy)
         new_group.merge_group(group2)
         return new_group
 
@@ -61,6 +66,12 @@ class Group:
 
     def get_row_id_at_index(self, index: int) -> str:
         return self.ids[index]
+
+    def get_pr_value_at_index(self, index: int) -> str:
+        return self.pr_values[index]
+
+    def get_all_attrs_at_index(self, index: int) -> Tuple[np.ndarray, str, str]:
+        return self.group_table[index], self.ids[index], self.pr_values[index]
 
     def get_random_row(self) -> Tuple[int, np.ndarray]:
         """
@@ -106,10 +117,10 @@ class Group:
 
 
 def create_empty_group() -> Group:
-    return Group(group_table=None, ids=[])
+    return Group(group_table=None, ids=[], pr_values=[])
 
 
 def create_group_from_pandas_df(df: pd.DataFrame) -> Group:
     ids = list(df.columns)
     df = df.transpose()
-    return Group(group_table=df.values, ids=ids)
+    return Group(group_table=df.values, ids=ids, pr_values=["no_pr"]*len(ids))
