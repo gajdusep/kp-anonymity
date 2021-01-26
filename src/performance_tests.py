@@ -6,6 +6,7 @@ import pandas as pd
 from group import Group, create_group_from_pandas_df
 from kp_anonymity import kp_anonymity_kapra, kp_anonymity_classic, KPAlgorithm
 from load_data import *
+from verbose import setverbose
 
 
 def instant_value_loss(groups: List[Group]):
@@ -16,7 +17,7 @@ def run_all_tests():
 
     k_values = [3, 4, 5, 6, 7, 8, 9, 10]
     # k_values = [9, 10]
-    p_values = [3, 4, 5]
+    p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
     # p_values = [3, 4]
     pr_len = 4
@@ -35,7 +36,8 @@ def run_all_tests():
     bottomup_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
 
     times = pd.DataFrame(columns=k_values, index=p_values)
-
+    # TODO: remove verbose()
+    setverbose()
     for k in k_values:
         for p in p_values:
             # TODO: what exactly is: 2 rows were suppressed: they could not be merged.
@@ -50,13 +52,13 @@ def run_all_tests():
             print('--- {},{}-anonymity:'.format(k, p))
 
             kapra_time_s = time.time()
-            # anonymized_kapra = kp_anonymity_kapra(group, k, p, pr_len, max_level)
-            # kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
+            anonymized_kapra = kp_anonymity_kapra(group, k, p, pr_len, max_level)
+            kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
             kapra_time_e = time.time() - kapra_time_s
 
             topdown_time_s = time.time()
-            # anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
-            # topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
+            anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
+            topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
             topdown_time_e = time.time() - topdown_time_s
 
             bottomup_time_s = time.time()
