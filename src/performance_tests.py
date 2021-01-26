@@ -1,18 +1,32 @@
 import time
 
 from typing import List
+import numpy as np
 import pandas as pd
 
 from group import Group, create_group_from_pandas_df
 from kp_anonymity import kp_anonymity_kapra, kp_anonymity_classic, KPAlgorithm
 from load_data import *
+from node import SAX
+from p_anonymity import compute_pattern_similarity
+from verbose import setverbose
 
 
 def instant_value_loss(groups: List[Group]):
     return sum(group.instant_value_loss() for group in groups)
 
+def table_pattern_loss(table: np.ndarray, pr_list: List[str]):
+    pattern_loss = 0
+    original_pr_list: List[str] = []
+    for i, row in enumerate(table):
+        # TODO: which alphabet size?
+        pr = SAX(row, 3, pr_list[i])
+        pattern_loss += 1 - compute_pattern_similarity(pr, pr_list[i])
+    return 
 
 def run_all_tests():
+    
+    setverbose()
 
     k_values = [3, 4, 5, 6, 7, 8, 9, 10]
     # k_values = [9, 10]
@@ -38,8 +52,6 @@ def run_all_tests():
 
     for k in k_values:
         for p in p_values:
-            # TODO: what exactly is: 2 rows were suppressed: they could not be merged.
-            #         TODO: -can it be removed / put to verbose..?
             # TODO: if line 24 is commented, it crashes.. why..?
             if k < p:
                 kapra_ivl_result_dataframe[k][p] = -1
@@ -50,13 +62,13 @@ def run_all_tests():
             print('--- {},{}-anonymity:'.format(k, p))
 
             kapra_time_s = time.time()
-            # anonymized_kapra = kp_anonymity_kapra(group, k, p, pr_len, max_level)
-            # kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
+            anonymized_kapra = kp_anonymity_kapra(group, k, p, pr_len, max_level)
+            kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
             kapra_time_e = time.time() - kapra_time_s
 
             topdown_time_s = time.time()
-            # anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
-            # topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
+            anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
+            topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
             topdown_time_e = time.time() - topdown_time_s
 
             bottomup_time_s = time.time()
