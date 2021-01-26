@@ -26,7 +26,7 @@ def run_all_tests():
     max_level = 3
     path_to_file = "data/table.csv"
 
-    df = load_data_from_file(path_to_file)
+    df = load_data_from_file(path_to_file, False)
     df = remove_rows_with_nan(df)
     df = remove_outliers(df, max_stock_value=5000)
     df = reduce_dataframe(df, companies_count=50, attributes_count=20)

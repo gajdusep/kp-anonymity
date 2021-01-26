@@ -360,7 +360,7 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
 
             if p == parts_into_split - 1:
                 while group_to_be_split.size() > 0:
-                    row, row_id, row_pr_val = group_to_be_split.pop_row(index)
+                    row, row_id, row_pr_val = group_to_be_split.pop_row(0)
                     splitted_group.add_row_to_group(row, row_id, row_pr_val)
                 list_of_groups.append(splitted_group)
             else:

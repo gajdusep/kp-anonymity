@@ -4,12 +4,28 @@ from enum import Enum
 from typing import List, Dict
 
 from load_data import *
-from visualize import visualize_envelopes, visualize_p_anonymized_nodes
+from visualize import visualize_envelopes, visualize_p_anonymized_nodes, visualize_all_companies
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import *
+import matplotlib.pyplot as plt
+
+
+# TODO: write the result to the file:
+#   - finish the QI and SD
+#   - output file
+# TODO: download data from this page: https://archive.ics.uci.edu/ml/machine-learning-databases/00432/Data/
+#   - try to run performance_tests
+# TODO:
+#   - finish input_file, output_file
+# TODO:
+#   - metrics
+
+# TODO: presentation
+#   - graphs (anonymization envelopes, pr-values)
+#   - time spent in algorithms (also graphs?)
 
 
 class KPAlgorithm(str, Enum):
@@ -86,26 +102,27 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
     df = load_data_from_file(path_to_file)
     df = remove_rows_with_nan(df)
     # visualize_all_companies(df)
-    df = remove_outliers(df, max_stock_value=5000)
+    # df = remove_outliers(df, max_stock_value=5000)
     # visualize_all_companies(df)
 
     # for testing purposes, let's reduce the number of companies and attributes
-    df = reduce_dataframe(df, companies_count=50, attributes_count=20)
+    # df = reduce_dataframe(df, companies_count=20, attributes_count=30)
+    df = reduce_dataframe_short(df, companies_count=100, attributes_count=30)
+    print(df)
     # visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    # plt.show()
+    plt.show()
 
     table_group = create_group_from_pandas_df(df)
     print('Table created: {} {}\n-----------------'.format(table_group.shape(), table_group.ids))
 
-    # TODO: kp_anonymity_classic and also kp_anonymity_kapra should return something to be for example saved to the file
     if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
         kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
     else:
         kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
-    # TODO: finish the QI and SD
+    # TODO: call some method to write into the output file
 
 
 def parse_arguments():
@@ -115,7 +132,7 @@ def parse_arguments():
     parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
     parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
-    parser.add_argument('-i', '--input-file', required=False)
+    parser.add_argument('-i', '--input-file', required=True)
     parser.add_argument('-o', '--output-file', required=False)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
@@ -174,7 +191,7 @@ if __name__ == "__main__":
     verbose("Verbose output enabled")
     debug("Debug output enabled")
 
-    do_kp_anonymity(path_to_file='data/table.csv', k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+    do_kp_anonymity(path_to_file=input_path, k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
 
     end_time = time.time() - start_time
     print("The program ran for: {} seconds".format(end_time))

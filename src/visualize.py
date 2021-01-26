@@ -7,6 +7,7 @@ from typing import List, Dict
 from group import Group
 from node import Node
 
+
 def visualize_all_companies(dataframe: pd.DataFrame):
     dataframe.plot()
     fontP = FontProperties()
@@ -14,6 +15,7 @@ def visualize_all_companies(dataframe: pd.DataFrame):
     
     plt.legend(loc='upper left', ncol=3, prop=fontP)
     return
+
 
 def get_cmap(n, name='hsv'):
     return plt.cm.get_cmap(name, n)
@@ -33,6 +35,7 @@ def visualize_envelopes(group_list: List[Group]):
     plt.title("k-group envelopes")
     plt.yscale("log")
     plt.show()
+
 
 def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     # https://stackoverflow.com/questions/50161140/how-to-plot-a-time-series-array-with-confidence-intervals-displayed-in-python
