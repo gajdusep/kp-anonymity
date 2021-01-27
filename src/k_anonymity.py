@@ -374,3 +374,6 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
     verbose('Updated list (after splitting): {} {}'.format(len(list_of_groups), list_of_groups))
 
     return list_of_groups
+
+
+# prova
