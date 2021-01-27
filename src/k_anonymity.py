@@ -6,8 +6,6 @@ from itertools import combinations
 from typing import Tuple, List
 
 from group import Group, create_empty_group
-from node import Node
-from visualize import visualize_envelopes
 from verbose import verbose
 
 

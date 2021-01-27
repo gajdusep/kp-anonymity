@@ -1,5 +1,5 @@
 import numpy as np
-from typing import Dict, List
+from typing import Dict, List, Tuple
 from saxpy.znorm import znorm
 from saxpy.paa import paa
 from saxpy.alphabet import cuts_for_asize
@@ -90,7 +90,8 @@ class Node:
         Returns a group containing the member rows of the node
         """
         debug("Converting node {} to group".format(self.id))
-        pr_list = [self.pr for _ in range(len(self.row_ids))]
+        # pr_list: List[PR] = [PR(self.pr, self.level) for _ in range(len(self.row_ids))]
+        pr_list: List[Tuple[str, int]] = [(self.pr, self.level) for _ in range(len(self.row_ids))]
         return Group(self.table, self.row_ids, pr_list)
 
     def copy(self):

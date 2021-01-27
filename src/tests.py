@@ -9,16 +9,17 @@ from p_anonymity import compute_pattern_similarity, p_anonymity_naive
 
 def test_compute_pattern_similarity():
     prs = [
-        "aabca",
-        "abbca",
-        "abcba",
-        "aacea",
-        "acdeb",
-        "aaaaa"
+        ("aabca", 3),
+        ("abbca", 3),
+        ("abcba", 3),
+        ("aacea", 5),
+        ("acdeb", 5),
+        ("ccbac", 3),
+        ("aaaaa", 1)
     ]
     for n in range(len(prs)):
-        print(compute_pattern_similarity(prs[0], prs[n]))
-    print(compute_pattern_similarity(prs[-1], prs[-1]))
+        print(compute_pattern_similarity(prs[0][0], prs[n][0],prs[0][1], prs[n][1]))
+    print(compute_pattern_similarity(prs[-1][0], prs[-1][0],prs[-1][1], prs[-1][1]))
     return
 
 

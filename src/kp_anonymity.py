@@ -60,7 +60,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
         id_to_pr_value_dict = {}
         for node in final_nodes[ag]:
             for row_id in node.row_ids:
-                id_to_pr_value_dict[row_id] = node.pr
+                id_to_pr_value_dict[row_id] = (node.pr, node.level)
             verbose('   ' + str(node))
         for j, group_row_id in enumerate(ag.ids):
             ag.pr_values[j] = id_to_pr_value_dict[group_row_id]

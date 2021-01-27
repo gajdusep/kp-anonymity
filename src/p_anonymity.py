@@ -35,31 +35,30 @@ from verbose import verbose, debug
 #     debug("Computed similarity: {}".format(sim))
 #     return sim
 
-def pattern_representation_to_numpy_array(pr: str) -> np.ndarray:
-    arr = np.array([ord(c) - 97 for c in pr])
+def distance(a: np.ndarray, b: np.ndarray) -> float:
+    if len(a) != len(b):
+        raise ValueError("Arrays must have the same length")
+    return sum(abs(a[i] - b[i]) for i in range(len(a)))
+
+def pattern_representation_to_numpy_array(pr: str, l: int) -> np.ndarray:
+    if l == 1:
+        arr = np.array([0] * len(pr))
+    else:
+        arr = np.array([ord(c) - 97 for c in pr])/(l - 1)
     return arr
 
-def compute_pattern_similarity(pr1: str, pr2: str) -> float:
+def compute_pattern_similarity(pr1: str, pr2: str, l1: int, l2: int) -> float:
     """
-    Calculates the cosine similarity between two pattern representations as a value between -1 and 1.
+    Calculates the similarity between two pattern representations.
     """
 
     debug('Computing similarity of patterns "{}" and "{}"'.format(pr1, pr2))
     if len(pr1) != len(pr2):
         raise ValueError("Pattern similarity cannot be computed on PRs of different lengths")
 
-    arr1 = pattern_representation_to_numpy_array(pr1)
-    arr2 = pattern_representation_to_numpy_array(pr2)
-    norm1 = np.linalg.norm(arr1)
-    norm2 = np.linalg.norm(arr2)
-
-    if norm1 == 0 or norm2 == 0:
-        if norm1 == norm2:
-            return 1
-        else:
-            return -1
-
-    return np.dot(arr1, arr2)/(norm1*norm2)
+    arr1 = pattern_representation_to_numpy_array(pr1, l1)
+    arr2 = pattern_representation_to_numpy_array(pr2, l2)
+    return -distance(arr1, arr2)
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -> Dict[str, List[Node]]:
     """
@@ -152,7 +151,7 @@ def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
         verbose("Only 1 good leaf (node {}): adding all bad leaf rows to the only good leaf".format(good.id))
         for bad in bad_leaves:
             debug("Processing bad leaf {}".format(bad.id))
-            debug("Similarity to good node: {})".format(compute_pattern_similarity(bad.pr, good.pr)))
+            debug("Similarity to good node: {})".format(compute_pattern_similarity(bad.pr, good.pr, bad.level, good.level)))
             good.extend_table_with_node(bad)
     else:
         verbose("Starting postprocessing phase")
@@ -162,7 +161,7 @@ def postprocess(good_leaves: List[Node], bad_leaves: List[Node]) -> List[Node]:
             max_similarity = None
             most_similar_good = None
             for good in good_leaves:
-                similarity = compute_pattern_similarity(bad.pr, good.pr)
+                similarity = compute_pattern_similarity(bad.pr, good.pr, bad.level, good.level)
                 if max_similarity is None or similarity > max_similarity:
                     max_similarity = similarity
                     most_similar_good = good

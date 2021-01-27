@@ -5,15 +5,14 @@ import copy
 
 from typing import Union, Tuple, List
 
-
 class Group:
 
-    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[str] = []):
+    def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[Tuple[str, int]] = []):
         self.group_table = group_table
         self.ids = ids
         self.pr_values = pr_values
     
-    def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id", pr_value: str = "no_pr"):
+    def add_row_to_group(self, row: np.ndarray, row_id: str = "no_id", pr_value: Tuple[str, int] = ("no_pr", 0)):
         self.ids.append(row_id)
         self.pr_values.append(pr_value)
         if self.group_table is None:
@@ -70,7 +69,7 @@ class Group:
     def get_pr_value_at_index(self, index: int) -> str:
         return self.pr_values[index]
 
-    def get_all_attrs_at_index(self, index: int) -> Tuple[np.ndarray, str, str]:
+    def get_all_attrs_at_index(self, index: int) -> Tuple[np.ndarray, str, Tuple[str, int]]:
         return self.group_table[index], self.ids[index], self.pr_values[index]
 
     def get_random_row(self) -> Tuple[int, np.ndarray]:
@@ -123,4 +122,4 @@ def create_empty_group() -> Group:
 def create_group_from_pandas_df(df: pd.DataFrame) -> Group:
     ids = list(df.columns)
     df = df.transpose()
-    return Group(group_table=df.values, ids=ids, pr_values=["no_pr"]*len(ids))
+    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids))

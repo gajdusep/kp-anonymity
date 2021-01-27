@@ -1,28 +1,60 @@
 import time
+import math
 
-from typing import List
+from typing import List, Tuple
 import numpy as np
 import pandas as pd
+from saxpy.paa import paa
+from saxpy.znorm import znorm
+from saxpy.alphabet import cuts_for_asize
 
 from group import Group, create_group_from_pandas_df
 from kp_anonymity import kp_anonymity_kapra, kp_anonymity_classic, KPAlgorithm
 from load_data import *
 from node import SAX
-from p_anonymity import compute_pattern_similarity
+from p_anonymity import compute_pattern_similarity, distance
 from verbose import setverbose
 
+def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+
+    if norm_a == 0 or norm_b == 0:
+        return 0
+
+    return np.dot(a, b)/(norm_a*norm_b)
 
 def instant_value_loss(groups: List[Group]):
     return sum(group.instant_value_loss() for group in groups)
 
-def table_pattern_loss(table: np.ndarray, pr_list: List[str]):
-    pattern_loss = 0
-    original_pr_list: List[str] = []
+def gaussian(x):
+    return (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * math.pow(x, 2))
+
+def row_pattern_loss(row: np.ndarray, pr: Tuple[str, int]):
+    pattern = []
+    cuts = cuts_for_asize(pr[1] + 1)[1:]
+    for c in pr[0]:
+        n = ord(c) - 97
+        pattern.append(cuts[n])
+    if len(pattern) != len(row):
+        normalized_row = paa(znorm(row), len(pattern))
+    else:
+        normalized_row = znorm(row)
+    return distance(normalized_row, pattern)
+
+def table_pattern_loss(table: np.ndarray, pr_list: List[Tuple[str, int]]):
+    return sum(row_pattern_loss(row, pr_list[i]) for i, row in enumerate(table))
+
+def pattern_loss(groups: List[Group]):
+    return sum(table_pattern_loss(group.group_table, group.pr_values) for group in groups)
+
+def table_pattern_diff(table: np.ndarray, pr_list: List[Tuple[str, int]], max_level: int):
+    pattern_diff = 0
     for i, row in enumerate(table):
-        # TODO: which alphabet size?
-        pr = SAX(row, 3, pr_list[i])
-        pattern_loss += 1 - compute_pattern_similarity(pr, pr_list[i])
-    return 
+        pr = SAX(row, max_level, pr_list[i])
+        pattern_diff += 1 - compute_pattern_similarity(pr, pr_list[i])
+    return pattern_diff
+
 
 def run_all_tests():
     
@@ -32,14 +64,14 @@ def run_all_tests():
     # k_values = [5]
     # k_values = [9, 10]
     # p_values = [2, 3, 4, 5]
-    p_values = [2]
+    p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
     # p_values = [3, 4]
     pr_len = 4
     max_level = 3
     path_to_file = "data/stock_data_full.csv"
 
-    df = load_data_from_file(path_to_file, False)
+    df = load_data_from_file(path_to_file)
 
     df = remove_outliers(df, max_stock_value=5000)
 
@@ -48,6 +80,9 @@ def run_all_tests():
     kapra_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
     topdown_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
     bottomup_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
+    kapra_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
+    topdown_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
+    bottomup_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
 
     times = pd.DataFrame(columns=k_values, index=p_values)
     # TODO: remove verbose()
@@ -56,37 +91,51 @@ def run_all_tests():
         for p in p_values:
             # TODO: if line 24 is commented, it crashes.. why..?
             if k < p:
-                kapra_ivl_result_dataframe[k][p] = -1
-                topdown_ivl_result_dataframe[k][p] = -1
-                bottomup_ivl_result_dataframe[k][p] = -1
+                kapra_ivl_result_dataframe[k][p] = float("NaN")
+                topdown_ivl_result_dataframe[k][p] = float("NaN")
+                bottomup_ivl_result_dataframe[k][p] = float("NaN")
+                kapra_pl_result_dataframe[k][p] = float("NaN")
+                topdown_pl_result_dataframe[k][p] = float("NaN")
+                bottomup_pl_result_dataframe[k][p] = float("NaN")
                 continue
 
             print('--- {},{}-anonymity:'.format(k, p))
 
             kapra_time_s = time.time()
             anonymized_kapra = kp_anonymity_kapra(group, k, p, pr_len, max_level)
-            kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
             kapra_time_e = time.time() - kapra_time_s
+            kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
+            kapra_pl_result_dataframe[k][p] = pattern_loss(anonymized_kapra)
 
             topdown_time_s = time.time()
             anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
-            topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
             topdown_time_e = time.time() - topdown_time_s
+            topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
+            topdown_pl_result_dataframe[k][p] = pattern_loss(anonymized_topdown)
 
             bottomup_time_s = time.time()
             anonymized_bottomup = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.BOTTOMUP)
-            bottomup_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_bottomup)
             bottomup_time_e = time.time() - bottomup_time_s
+            bottomup_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_bottomup)
+            bottomup_pl_result_dataframe[k][p] = pattern_loss(anonymized_bottomup)
 
             times[k][p] = (round(kapra_time_e, 2), round(topdown_time_e, 2), round(bottomup_time_e, 2))
 
+    print('\n----------- Instant Value Loss -----------')
     print('\n----------- kapra -----------')
     print(kapra_ivl_result_dataframe)
     print('\n----------- top-down -----------')
     print(topdown_ivl_result_dataframe)
     print('\n----------- bottom-up -----------')
     print(bottomup_ivl_result_dataframe)
-    print('\n----------- times -----------')
+    print('\n----------- Pattern Loss -----------')
+    print('\n----------- kapra -----------')
+    print(kapra_pl_result_dataframe)
+    print('\n----------- top-down -----------')
+    print(topdown_pl_result_dataframe)
+    print('\n----------- bottom-up -----------')
+    print(bottomup_pl_result_dataframe)
+    print('\n----------- Times -----------')
     print(times)
 
 
