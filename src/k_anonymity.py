@@ -21,6 +21,11 @@ def compute_ncp(rows: np.ndarray, min_max_diff: np.ndarray) -> float:
         Therefore ncp:
         3*((3-1)/20 + (2-2)/4 + (5-0)/10 + (5-2)/5) = 3*(0.1+0+0.5+0.6) = 3.6
     """
+    where_0 = np.where(min_max_diff == 0)
+    if where_0[0].shape[0] != 0:
+        print(min_max_diff)
+        print(where_0)
+
     z = np.max(rows, axis=0)
     y = np.min(rows, axis=0)
     zy_diff = z - y
@@ -28,7 +33,7 @@ def compute_ncp(rows: np.ndarray, min_max_diff: np.ndarray) -> float:
     return rows.shape[0] * ncp
 
 
-def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
+def get_init_tuples_uv(G: Group, min_max_diff_g: np.ndarray) -> Tuple[int, int]:
     """
     Returns the best rows to start the k-anonymity with
     :param G: Group to search
@@ -37,7 +42,7 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
 
     size = G.size()
     index_u, u_max = G.get_random_row()
-    min_max_diff_g = G.get_min_max_diff()
+    # min_max_diff_g = G.get_min_max_diff()
 
     for _ in range(3):
         max_ncp = -math.inf
@@ -71,16 +76,16 @@ def get_init_tuples_uv(G: Group) -> Tuple[int, int]:
     return index_u, index_v
 
 
-def group_partition(G: Group, k: int):
+def group_partition(G: Group, k: int, min_max_diff_g: np.ndarray):
     size = G.size()
     if size <= k:
         return [G]
     Gu = create_empty_group()
     Gv = create_empty_group()
 
-    min_max_diff_g = G.get_min_max_diff()
+    # min_max_diff_g = G.get_min_max_diff()
 
-    (index_u, index_v) = get_init_tuples_uv(G)
+    (index_u, index_v) = get_init_tuples_uv(G, min_max_diff_g)
     u_max, u_max_id, u_max_pr_val = G.get_all_attrs_at_index(index_u)
     v_max, v_max_id, v_max_pr_val = G.get_all_attrs_at_index(index_v)
 
@@ -205,7 +210,7 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
 
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
-        group_list = group_partition(group_to_anonymize, k)
+        group_list = group_partition(group_to_anonymize, k, min_max_diff_g)
 
         both_have_less = True
         for group in group_list:

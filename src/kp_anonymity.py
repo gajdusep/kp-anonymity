@@ -100,19 +100,12 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
 
 def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     df = load_data_from_file(path_to_file)
-    df = remove_rows_with_nan(df)
     # visualize_all_companies(df)
     # df = remove_outliers(df, max_stock_value=5000)
     # visualize_all_companies(df)
 
-    # for testing purposes, let's reduce the number of companies and attributes
-    # df = reduce_dataframe(df, companies_count=20, attributes_count=30)
-    df = reduce_dataframe_short(df, companies_count=100, attributes_count=30)
-    print(df)
-    # visualize_all_companies(df)
-
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
-    plt.show()
+    # plt.show()
 
     table_group = create_group_from_pandas_df(df)
     print('Table created: {} {}\n-----------------'.format(table_group.shape(), table_group.ids))

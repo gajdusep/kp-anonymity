@@ -37,13 +37,11 @@ def run_all_tests():
     # p_values = [3, 4]
     pr_len = 4
     max_level = 3
-    path_to_file = "data/table.csv"
+    path_to_file = "data/stock_data_full.csv"
 
     df = load_data_from_file(path_to_file, False)
-    df = remove_rows_with_nan(df)
+
     df = remove_outliers(df, max_stock_value=5000)
-    df = reduce_dataframe(df, companies_count=50, attributes_count=20)
-    # df = reduce_dataframe(df, companies_count=30)
 
     group = create_group_from_pandas_df(df)
 
