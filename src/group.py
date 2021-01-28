@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import copy
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 
 class Group:
 
@@ -119,7 +119,13 @@ def create_empty_group() -> Group:
     return Group(group_table=None, ids=[], pr_values=[])
 
 
-def create_group_from_pandas_df(df: pd.DataFrame) -> Group:
+def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float]]:
     ids = list(df.columns)
     df = df.transpose()
-    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids))
+    sd = df.iloc[:,-1].tolist()
+
+    sd_dict = {}
+    for i, id in enumerate(ids):
+        sd_dict[id] = sd[i]
+
+    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids)), sd_dict
