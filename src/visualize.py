@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.font_manager import FontProperties
 from typing import List, Dict
+from pyparsing import line
+from saxpy.paa import paa
 
 from group import Group
 from node import Node
@@ -33,7 +35,7 @@ def visualize_envelopes(group_list: List[Group]):
             plt.plot(range(n), group.get_row_at_index(i), color=color)
         plt.fill_between(range(group.shape()[1]), group.get_maxes(), group.get_mins(), alpha=0.1, color=color)
     plt.title("k-group envelopes")
-    plt.yscale("log")
+    plt.yscale("symlog")
     plt.show()
 
 
@@ -57,7 +59,8 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
         else:
             node_color = "grey"
         for row in node.table:
-            plt.plot(range(n), row, color=node_color, label=node.pr)
+            #plt.plot(range(n), row, color=node_color, label=node.pr)
+            plt.plot(paa(row, node.pr_len()), color=node_color, label=node.pr, ls="-")
     
     fontP = FontProperties()
     fontP.set_size('xx-small')
@@ -68,7 +71,7 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.legend(by_label.values(), by_label.keys(), loc = 'upper left', ncol = 3, prop = fontP)
     
     plt.title("p-anonymization")
-    plt.yscale("log")
+    plt.yscale("symlog")
     plt.show()
 
     """
