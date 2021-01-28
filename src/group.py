@@ -7,6 +7,7 @@ from typing import Union, Tuple, List, Dict
 
 from verbose import debug
 
+
 class Group:
 
     def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[Tuple[str, int]] = []):
@@ -121,11 +122,11 @@ def create_empty_group() -> Group:
     return Group(group_table=None, ids=[], pr_values=[])
 
 
-def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float]]:
-    group_table = df.iloc[:,:-1].to_numpy()
+def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float], List[str]]:
+    group_table = df.iloc[:, :-1].to_numpy()
     col_labels = list(df.columns.values)
     ids = list(df.index.values)
-    sd = df.iloc[:,-1].tolist()
+    sd = df.iloc[:, -1].tolist()
 
     debug("cols: " + str(col_labels))
     debug(len(col_labels))

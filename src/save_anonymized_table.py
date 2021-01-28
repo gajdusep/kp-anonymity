@@ -11,4 +11,3 @@ def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float]):
             anonymized_table.append(tuple)
         
     print(anonymized_table)
-

@@ -1,11 +1,11 @@
 from operator import index
 import time
 import math
+import sys
 
 from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
-from pandas.core.frame import DataFrame
 from saxpy.paa import paa
 from saxpy.znorm import znorm
 from saxpy.alphabet import cuts_for_asize
@@ -13,10 +13,14 @@ from saxpy.alphabet import cuts_for_asize
 from group import Group, create_group_from_pandas_df
 from kp_anonymity import kp_anonymity_kapra, kp_anonymity_classic, KPAlgorithm
 from load_data import *
-from node import SAX
-from p_anonymity import compute_pattern_similarity, distance
+from p_anonymity import distance
 from verbose import setverbose, setdebug
 from visualize import visualize_performance
+
+
+def instant_value_loss(groups: List[Group]):
+    return sum(group.instant_value_loss() for group in groups)
+
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     norm_a = np.linalg.norm(a)
@@ -27,11 +31,10 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
 
     return np.dot(a, b)/(norm_a*norm_b)
 
-def instant_value_loss(groups: List[Group]):
-    return sum(group.instant_value_loss() for group in groups)
 
 def gaussian(x):
     return (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * math.pow(x, 2))
+
 
 def row_pattern_loss(row: np.ndarray, pr: Tuple[str, int]):
     pattern = []
@@ -45,8 +48,10 @@ def row_pattern_loss(row: np.ndarray, pr: Tuple[str, int]):
         normalized_row = znorm(row)
     return distance(normalized_row, pattern)
 
+
 def table_pattern_loss(table: np.ndarray, pr_list: List[Tuple[str, int]]):
     return sum(row_pattern_loss(row, pr_list[i]) for i, row in enumerate(table))
+
 
 def pattern_loss(groups: List[Group]):
     return sum(table_pattern_loss(group.group_table, group.pr_values) for group in groups)
@@ -59,7 +64,7 @@ def pattern_loss(groups: List[Group]):
 #     return pattern_diff
 
 
-def run_all_tests():
+def run_all_tests(path: str):
 
     # k_values = list(range(4,5))
     # p_values = list(range(2,3))
@@ -71,9 +76,8 @@ def run_all_tests():
     p_values.sort()
     pr_len = 5
     max_level = 5
-    path_to_file = "data/stock_data_full.csv"
 
-    df = load_data_from_file(path_to_file)
+    df = load_data_from_file(path)
 
     df = remove_outliers(df, max_stock_value=5000)
 
@@ -206,4 +210,4 @@ def run_all_tests():
     return
     
 if __name__ == "__main__":
-    run_all_tests()
+    run_all_tests(sys.argv[1])

@@ -11,22 +11,6 @@ from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import *
-import matplotlib.pyplot as plt
-
-
-# TODO: write the result to the file:
-#   - finish the QI and SD
-#   - output file
-# TODO: download data from this page: https://archive.ics.uci.edu/ml/machine-learning-databases/00432/Data/
-#   - try to run performance_tests
-# TODO:
-#   - finish input_file, output_file
-# TODO:
-#   - metrics
-
-# TODO: presentation
-#   - graphs (anonymization envelopes, pr-values)
-#   - time spent in algorithms (also graphs?)
 
 
 class KPAlgorithm(str, Enum):
@@ -38,7 +22,9 @@ class KPAlgorithm(str, Enum):
 show_plots = False
 
 
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str) -> List[Group]:
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int,
+                         kp_algorithm: str) -> List[Group]:
+
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     else:  # kp_algorithm == KPAlgorithm.BOTTOMUP - no other option should get here
@@ -99,7 +85,8 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
     return final_group_list
 
 
-def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
+def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len: int, max_level: int,
+                    kp_algorithm: str):
     df = load_data_from_file(path_to_file)
 
     # visualize_all_companies(df)
@@ -190,7 +177,8 @@ if __name__ == "__main__":
     verbose("Verbose output enabled")
     debug("Debug output enabled")
 
-    do_kp_anonymity(path_to_file=input_path, k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+    do_kp_anonymity(path_to_file=input_path, output_path=output_path,
+                    k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
 
     end_time = time.time() - start_time
     print("The program ran for: {} seconds".format(end_time))
