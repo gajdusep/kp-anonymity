@@ -100,6 +100,7 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
 
 def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
     df = load_data_from_file(path_to_file)
+
     # visualize_all_companies(df)
     # df = remove_outliers(df, max_stock_value=5000)
     # visualize_all_companies(df)
@@ -114,7 +115,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
         ag = kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
     else:
         ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
-    
+
     # TODO: call some method to write into the output file
 
 

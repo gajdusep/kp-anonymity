@@ -13,7 +13,7 @@ from kp_anonymity import kp_anonymity_kapra, kp_anonymity_classic, KPAlgorithm
 from load_data import *
 from node import SAX
 from p_anonymity import compute_pattern_similarity, distance
-from verbose import setverbose
+from verbose import setverbose, unsetverbose
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     norm_a = np.linalg.norm(a)
@@ -57,19 +57,17 @@ def table_pattern_diff(table: np.ndarray, pr_list: List[Tuple[str, int]], max_le
 
 
 def run_all_tests():
-    
-    setverbose()
 
-    k_values = [3, 4, 5, 6, 7, 8, 9, 10]
+    # k_values = [3, 4, 5, 6, 7, 8, 9, 10]
     # k_values = [5]
-    # k_values = [9, 10]
+    k_values = [7, 8, 9, 10]
     # p_values = [2, 3, 4, 5]
-    p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
-    # p_values = [3, 4]
+    # p_values = [2, 3, 4, 5]
+    p_values = [3, 4]
     pr_len = 4
     max_level = 3
-    path_to_file = "data/stock_data_full.csv"
+    path_to_file = "data/stock_data_reduced.csv"
 
     df = load_data_from_file(path_to_file)
 
@@ -85,11 +83,10 @@ def run_all_tests():
     bottomup_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
 
     times = pd.DataFrame(columns=k_values, index=p_values)
-    # TODO: remove verbose()
-    # setverbose()
+    # setverose()
+    unsetverbose()
     for k in k_values:
         for p in p_values:
-            # TODO: if line 24 is commented, it crashes.. why..?
             if k < p:
                 kapra_ivl_result_dataframe[k][p] = float("NaN")
                 topdown_ivl_result_dataframe[k][p] = float("NaN")

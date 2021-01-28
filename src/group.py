@@ -26,7 +26,7 @@ class Group:
             self.pr_values.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
 
-    def pop_row(self, index) -> Union[Tuple[np.ndarray, str, str], None]:
+    def pop_row(self, index) -> Union[Tuple[np.ndarray, str, Tuple[str, int]], None]:
         if self.size() > 0:
             popped_id = self.ids.pop(index)
             popped_pr_value = self.pr_values.pop(index)
@@ -66,7 +66,7 @@ class Group:
     def get_row_id_at_index(self, index: int) -> str:
         return self.ids[index]
 
-    def get_pr_value_at_index(self, index: int) -> str:
+    def get_pr_value_at_index(self, index: int) -> Tuple[str, int]:
         return self.pr_values[index]
 
     def get_all_attrs_at_index(self, index: int) -> Tuple[np.ndarray, str, Tuple[str, int]]:
