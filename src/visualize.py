@@ -54,7 +54,6 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     pr_cmap = get_cmap(len(pr_dict) + 1)
 
     n = len(nodes_list[0].table[0])
-    draw_markers = False
     if nodes_list[0].pr_len() != n:
         paa_linespace = np.linspace(0, n-1, (2 * nodes_list[0].pr_len() + 1))
         paa_positions = paa_linespace[1::2]
@@ -82,7 +81,6 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
             for row in node.table:
                 plt.plot(range(n), row, color=node_color, label=node.pr, alpha=line_alpha)
 
-    
     fontP = FontProperties()
     fontP.set_size('xx-small')
 
