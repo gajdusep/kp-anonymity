@@ -20,14 +20,17 @@ def compute_ncp(rows: np.ndarray, min_max_diff: np.ndarray) -> float:
         3*((3-1)/20 + (2-2)/4 + (5-0)/10 + (5-2)/5) = 3*(0.1+0+0.5+0.6) = 3.6
     """
     where_0 = np.where(min_max_diff == 0)
-    if where_0[0].shape[0] != 0:
-        print(min_max_diff)
-        print(where_0)
+    # if where_0[0].shape[0] != 0:
+    #     print(min_max_diff)
+    #     print(where_0)
+    #     print(np.sum(np.max(rows, axis=0) - np.min(rows, axis=0) / min_max_diff))
 
     z = np.max(rows, axis=0)
     y = np.min(rows, axis=0)
     zy_diff = z - y
-    ncp = np.sum(zy_diff / min_max_diff)
+    divided = np.array(zy_diff / min_max_diff)
+    divided[np.where(np.isnan(divided))] = 0
+    ncp = np.sum(divided)
     return rows.shape[0] * ncp
 
 

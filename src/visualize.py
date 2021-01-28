@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.font_manager import FontProperties
 from typing import List, Dict
+import numpy as np
 
 from group import Group
 from node import Node
@@ -110,3 +111,44 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.yscale("log")
     plt.show()
     """
+
+
+def visualize_performance_times(times_df):
+    pass
+
+
+def visualize_performance_ivl(instant_value_losses):
+    pass
+
+
+def visualize_performance_pattern_loss(kapra_pl: pd.DataFrame, bottom_up_pl: pd.DataFrame, top_down_pl: pd.DataFrame,
+                                       k=None, p=None):
+    if p is None and k is None:
+        return
+
+    names = ["kapra", "bottom-up", "top-down"]
+
+    if k is not None:
+        kapra_l = list(kapra_pl[k])
+        bottom_up_l = list(bottom_up_pl[k])
+        top_down_l = list(top_down_pl[k])
+        plt.xticks(kapra_pl.index)
+        plt.plot(np.array([kapra_l, bottom_up_l, top_down_l]).transpose())
+
+    if p is not None:
+        kapra_l = list(kapra_pl.loc[p])
+        bottom_up_l = list(bottom_up_pl.loc[p])
+        top_down_l = list(top_down_pl.loc[p])
+
+        plt.title("Instant value loss, p={}".format(p))
+        plt.xticks(range(len(kapra_pl.columns)), kapra_pl.columns)
+        plt.xlabel("k")
+        plt.ylabel("instant value loss")
+        plt.plot(kapra_l, label=names[0])
+        plt.plot(bottom_up_l, label=names[1])
+        plt.plot(top_down_l, label=names[2])
+        plt.legend()
+
+
+def visualize_performance_results():
+    pass
