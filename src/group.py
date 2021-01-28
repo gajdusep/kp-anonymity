@@ -5,6 +5,8 @@ import copy
 
 from typing import Union, Tuple, List, Dict
 
+from verbose import debug
+
 class Group:
 
     def __init__(self, group_table: Union[np.ndarray, None], ids: List[str], pr_values: List[Tuple[str, int]] = []):
@@ -120,12 +122,22 @@ def create_empty_group() -> Group:
 
 
 def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float]]:
-    ids = list(df.columns)
-    df = df.transpose()
+    group_table = df.iloc[:,:-1].to_numpy()
+    col_labels = list(df.columns.values)
+    ids = list(df.index.values)
     sd = df.iloc[:,-1].tolist()
 
+    debug("cols: " + str(col_labels))
+    debug(len(col_labels))
+    debug("ids: " + str(ids))
+    debug(len(ids))
+    debug("SD:" + str(sd))
+    debug(len(sd))
+    debug("table:\n" + str(group_table))
+    debug(group_table.shape)
+    
     sd_dict = {}
     for i, id in enumerate(ids):
         sd_dict[id] = sd[i]
 
-    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids)), sd_dict
+    return Group(group_table=group_table, ids=ids, pr_values=[("no_pr", 0)]*len(ids)), sd_dict, col_labels
