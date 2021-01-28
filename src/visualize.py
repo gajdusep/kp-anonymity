@@ -38,6 +38,7 @@ def visualize_envelopes(group_list: List[Group]):
     plt.title("k-group envelopes")
     plt.yscale("symlog")
     plt.show()
+    return
 
 
 def visualize_p_anonymized_nodes(nodes_list: List[Node]):
@@ -92,6 +93,8 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.title("p-anonymization")
     plt.yscale("symlog")
     plt.show()
+    return
+
 
     """
     def visualize_p_anonymized_nodes_old(nodes_dict: Dict[Group, List[Node]]):
@@ -131,4 +134,23 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.title("p-anonymization")
     plt.yscale("log")
     plt.show()
+    return
     """
+
+
+def visualize_performance(values: pd.DataFrame, title: str = "", x: str = "", y: str = "", labels = None) -> None:
+    if labels == None:
+        labels = values.index
+    cmap = get_cmap(len(values.index) + 1)
+    for label, row in values.iterrows():
+        i = values.index.get_loc(label)
+        color = cmap(i)
+        plt.plot(row, color=color, label=labels[i], marker="o", linestyle="-")
+    fontP = FontProperties()
+    fontP.set_size('xx-small')
+    plt.legend(loc = 'upper left', ncol = 3, prop = fontP)
+    plt.title(title)
+    plt.xlabel(x)
+    plt.ylabel(y)
+    plt.show()
+    return

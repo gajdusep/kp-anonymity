@@ -30,9 +30,9 @@ import matplotlib.pyplot as plt
 
 
 class KPAlgorithm(str, Enum):
-    TOPDOWN = 'top-down'
-    BOTTOMUP = 'bottom-up'
-    KAPRA = 'kapra'
+    TOPDOWN = 'Top-Down'
+    BOTTOMUP = 'Bottom-Up'
+    KAPRA = 'KAPRA'
 
 
 show_plots = False
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         print("ERROR: maximum supported PR level is 19 (saxpy library limitation)")
         exit()
     if k < p:
-        print("ERROR: k must be larger than P")
+        print("ERROR: k cannot be smaller than P")
         exit()
     if k < 2 * p:
         print("WARNING: k should be at least 2*P in order to obtain meaningful results")
