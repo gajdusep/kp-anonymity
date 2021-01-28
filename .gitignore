@@ -130,6 +130,7 @@ dmypy.json
 
 data/companies
 data/stock_metadata.csv
+data/anonymized_table.csv
 
 # Pycharm files
 .idea

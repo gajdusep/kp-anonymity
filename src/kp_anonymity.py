@@ -118,7 +118,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
         ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
     # TODO: call some method to write into the output file
-    save_anonymized_table(ag, sd_dict)
+    save_anonymized_table(ag, sd_dict, col_labels)
 
 
 def parse_arguments():
