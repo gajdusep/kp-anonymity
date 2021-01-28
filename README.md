@@ -17,12 +17,6 @@ Data Protection and Privacy - final project, (k,P)-anonymity
 Examples of how to run the program:
 
 
-,,pr_value,2012-12-28,2013-02-15
-1,(100,130),(100,400)
-2,(100,130),(100,200)
-3,(100,130),(100,500)
-
-
 ```shell
 pip3 install -r requirements.txt
 ```
@@ -31,6 +25,8 @@ pip3 install -r requirements.txt
 python3 src/kp_anonymity.py -k 4 -p 2 -a top-down
 python3 src/kp_anonymity.py -k 4 -p 2 -a bottom-up
 python3 src/kp_anonymity.py -k 4 -p 2 -a kapra
+
+python3 src/performance_tests.py data/weekly_transactions_full.csv
 ```
 
 How to use 

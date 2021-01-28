@@ -1,4 +1,6 @@
 import math
+import time
+
 import numpy as np
 import random
 
@@ -19,12 +21,6 @@ def compute_ncp(rows: np.ndarray, min_max_diff: np.ndarray) -> float:
         Therefore ncp:
         3*((3-1)/20 + (2-2)/4 + (5-0)/10 + (5-2)/5) = 3*(0.1+0+0.5+0.6) = 3.6
     """
-    where_0 = np.where(min_max_diff == 0)
-    # if where_0[0].shape[0] != 0:
-    #     print(min_max_diff)
-    #     print(where_0)
-    #     print(np.sum(np.max(rows, axis=0) - np.min(rows, axis=0) / min_max_diff))
-
     z = np.max(rows, axis=0)
     y = np.min(rows, axis=0)
     zy_diff = z - y
@@ -118,12 +114,14 @@ def group_partition(G: Group, k: int, min_max_diff_g: np.ndarray):
 def k_anonymity_top_down_postprocessing(less_than_k_anonymized_groups: List[Group],
                                         k_or_more_anonymized_groups: List[Group], min_max_diff_g: np.ndarray, k: int):
     while len(less_than_k_anonymized_groups) > 0:
+
         group_to_anonymize = less_than_k_anonymized_groups.pop(0)
         size = group_to_anonymize.size()
 
         min_ncp_small_groups = math.inf
         min_ncp_small_groups_object = None
         min_ncp_small_groups_index = -1
+
         for i, group in enumerate(less_than_k_anonymized_groups):
             trial_group = Group.merge_two_groups(group_to_anonymize, group)
             ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
@@ -161,23 +159,36 @@ def k_anonymity_top_down_postprocessing(less_than_k_anonymized_groups: List[Grou
             for index_chosen_group in range(len(groups_with_more_than_2k_minus_size)):
                 chosen_group = groups_with_more_than_2k_minus_size[index_chosen_group]
 
-                indexes = list(range(chosen_group.size()))
-                # combination of index without repetition in order to get all possible k-size subsets of group
-                subgroup_combinations = list(combinations(indexes, k - size))
+                tmp = create_empty_group()
+                for i in range(group_to_anonymize.size()):
+                    tmp.add_row_to_group(group_to_anonymize.get_row_at_index(i))
 
-                for combination in subgroup_combinations:
-                    tmp = create_empty_group()
-                    for j in range(k - size):
-                        r = chosen_group.get_row_at_index(combination[j])
+                used_indexes = []
+                for i in range(k - size):  # for number of elements that needs to be moved
+                    inner_best_index = -1
+                    inner_best_ncp = math.inf
+                    for j in range(chosen_group.size()):  # try to add every possible row of chosen group
+                        if j in used_indexes:
+                            continue
+
+                        r = chosen_group.get_row_at_index(j)
                         tmp.add_row_to_group(r)
+                        ncp = compute_ncp(tmp.group_table, min_max_diff_g)
 
-                    trial_group = Group.merge_two_groups(group_to_anonymize, tmp)
-                    ncp = compute_ncp(trial_group.group_table, min_max_diff_g)
+                        if ncp < inner_best_ncp:
+                            inner_best_ncp = ncp
+                            inner_best_index = j
 
-                    if ncp < min_ncp_alt1:
-                        min_ncp_alt1_group_index = index_chosen_group
-                        min_ncp_alt1 = ncp
-                        min_subgroup_indexes = combination
+                        tmp.delete_last_added_row()
+
+                    tmp.add_row_to_group(chosen_group.get_row_at_index(inner_best_index))
+                    used_indexes.append(inner_best_index)
+
+                # if the inner best ncp was better than all previous inner best ncps, save it
+                if inner_best_ncp < min_ncp_alt1:
+                    min_ncp_alt1_group_index = index_chosen_group
+                    min_subgroup_indexes = used_indexes
+                    min_ncp_alt1 = inner_best_ncp
 
         if min_ncp_alt1 < min_ncp:
             # alternative 1 is better - some rows of the found group will be added inside the group_to_anonymize
@@ -203,12 +214,10 @@ def k_anonymity_top_down(table_group: Group, k: int) -> List[Group]:
         return [table_group]
 
     verbose('--- Calculating k-anonymity top-down ---')
-
     groups_to_anonymize = [table_group]
     less_than_k_anonymized_groups = []
     k_or_more_anonymized_groups = []
     min_max_diff_g = table_group.get_min_max_diff()
-
     while len(groups_to_anonymize) > 0:
         group_to_anonymize = groups_to_anonymize.pop(0)
         group_list = group_partition(group_to_anonymize, k, min_max_diff_g)
@@ -330,20 +339,15 @@ def k_anonymity_bottom_up(table_group: Group, k: int) -> List[Group]:
 
         index_of_merging_group = find_index_of_group_to_be_merged(group_to_check, list_of_groups, min_max_diff)
         list_of_groups[index_of_merging_group].merge_group(group_to_check)
-
         smallest_group_i = find_smallest_group_index(list_of_groups)
-    
-    # biggest_group = find_biggest_group(list_of_groups)
 
     # visualize_envelopes(list_of_groups)
-
     list_of_groups_to_be_splitted = []
     for i in reversed(range(len(list_of_groups))):
         if list_of_groups[i].size() >= 2 * k:
             list_of_groups_to_be_splitted.append(list_of_groups.pop(i))
 
     verbose('Groups to split: {}'.format(list_of_groups_to_be_splitted))
-
     while len(list_of_groups_to_be_splitted) > 0:
         group_to_be_split = list_of_groups_to_be_splitted.pop()
 

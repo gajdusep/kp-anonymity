@@ -4,7 +4,6 @@ import pandas as pd
 
 def load_data_from_file(path_to_file: str) -> pd.DataFrame:
     df = pd.read_csv(path_to_file, index_col=0)
-    df += 1
     return df
 
 

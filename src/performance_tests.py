@@ -1,9 +1,11 @@
 import time
 import math
-
-from typing import List, Tuple
 import numpy as np
 import pandas as pd
+import sys
+
+from typing import List, Tuple
+
 from saxpy.paa import paa
 from saxpy.znorm import znorm
 from saxpy.alphabet import cuts_for_asize
@@ -17,6 +19,10 @@ from p_anonymity import compute_pattern_similarity, distance
 from verbose import setverbose, unsetverbose
 
 
+def instant_value_loss(groups: List[Group]):
+    return sum(group.instant_value_loss() for group in groups)
+
+
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     norm_a = np.linalg.norm(a)
     norm_b = np.linalg.norm(b)
@@ -25,10 +31,6 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
         return 0
 
     return np.dot(a, b)/(norm_a*norm_b)
-
-
-def instant_value_loss(groups: List[Group]):
-    return sum(group.instant_value_loss() for group in groups)
 
 
 def gaussian(x):
@@ -64,25 +66,26 @@ def table_pattern_diff(table: np.ndarray, pr_list: List[Tuple[str, int]], max_le
     return pattern_diff
 
 
-def run_all_tests():
+def run_all_tests(path: str):
 
     # k_values = [3, 4, 5, 6, 7, 8, 9, 10]
-    k_values = [3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
+    # k_values = [3, 4, 5, 6, 7, 8, 9, 10, 15, 20]
     # k_values = [5]
     # k_values = [7, 8, 9, 10]
+    k_values = [15, 20]
+
     # p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
     # p_values = [2, 3, 4, 5]
     p_values = [5]
     pr_len = 4
     max_level = 3
-    path_to_file = "data/stock_data_reduced.csv"
 
-    df = load_data_from_file(path_to_file)
+    df = load_data_from_file(path)
 
     df = remove_outliers(df, max_stock_value=5000)
 
-    group = create_group_from_pandas_df(df)
+    group, _, _ = create_group_from_pandas_df(df)
 
     kapra_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
     topdown_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
@@ -92,7 +95,7 @@ def run_all_tests():
     bottomup_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
 
     times = pd.DataFrame(columns=k_values, index=p_values)
-    # setverose()
+    # setverbose()
     unsetverbose()
     for k in k_values:
         for p in p_values:
@@ -113,20 +116,27 @@ def run_all_tests():
             kapra_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_kapra)
             kapra_pl_result_dataframe[k][p] = pattern_loss(anonymized_kapra)
 
-            # topdown_time_s = time.time()
-            # anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
-            # topdown_time_e = time.time() - topdown_time_s
-            # topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
-            # topdown_pl_result_dataframe[k][p] = pattern_loss(anonymized_topdown)
-            #
-            # bottomup_time_s = time.time()
-            # anonymized_bottomup = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.BOTTOMUP)
-            # bottomup_time_e = time.time() - bottomup_time_s
-            # bottomup_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_bottomup)
-            # bottomup_pl_result_dataframe[k][p] = pattern_loss(anonymized_bottomup)
+            print('------------------------------------------------------')
 
-            # times[k][p] = (round(kapra_time_e, 2), round(topdown_time_e, 2), round(bottomup_time_e, 2))
-            times[k][p] = (round(kapra_time_e, 2))
+            topdown_time_s = time.time()
+            anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
+            topdown_time_e = time.time() - topdown_time_s
+            topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
+            topdown_pl_result_dataframe[k][p] = pattern_loss(anonymized_topdown)
+
+            print('------------------------------------------------------')
+
+            bottomup_time_s = time.time()
+            anonymized_bottomup = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.BOTTOMUP)
+            bottomup_time_e = time.time() - bottomup_time_s
+            bottomup_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_bottomup)
+            bottomup_pl_result_dataframe[k][p] = pattern_loss(anonymized_bottomup)
+
+            print('------------------------------------------------------')
+
+            times[k][p] = (round(kapra_time_e, 2), round(topdown_time_e, 2), round(bottomup_time_e, 2))
+            # times[k][p] = (round(kapra_time_e, 2))
+            # times[k][p] = (round(kapra_time_e, 2), round(topdown_time_e, 2))
 
     print('\n----------- Instant Value Loss -----------')
     print('\n----------- kapra -----------')
@@ -151,4 +161,4 @@ def run_all_tests():
 
 
 if __name__ == "__main__":
-    run_all_tests()
+    run_all_tests(sys.argv[1])

@@ -4,28 +4,13 @@ from enum import Enum
 from typing import List, Dict
 
 from load_data import *
+from save_anonymized_table import save_anonymized_table
 from visualize import visualize_envelopes, visualize_p_anonymized_nodes, visualize_all_companies
 from group import Group, create_group_from_pandas_df
 from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import *
-import matplotlib.pyplot as plt
-
-
-# TODO: write the result to the file:
-#   - finish the QI and SD
-#   - output file
-# TODO: download data from this page: https://archive.ics.uci.edu/ml/machine-learning-databases/00432/Data/
-#   - try to run performance_tests
-# TODO:
-#   - finish input_file, output_file
-# TODO:
-#   - metrics
-
-# TODO: presentation
-#   - graphs (anonymization envelopes, pr-values)
-#   - time spent in algorithms (also graphs?)
 
 
 class KPAlgorithm(str, Enum):
@@ -37,7 +22,9 @@ class KPAlgorithm(str, Enum):
 show_plots = False
 
 
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str) -> List[Group]:
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int,
+                         kp_algorithm: str) -> List[Group]:
+
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     else:  # kp_algorithm == KPAlgorithm.BOTTOMUP - no other option should get here
@@ -98,7 +85,8 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
     return final_group_list
 
 
-def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
+def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len: int, max_level: int,
+                    kp_algorithm: str):
     df = load_data_from_file(path_to_file)
 
     # visualize_all_companies(df)
@@ -108,24 +96,24 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
     # plt.show()
 
-    table_group = create_group_from_pandas_df(df)
-
+    table_group, sd_dict, col_labels = create_group_from_pandas_df(df)
     print('Table created: {} {}\n-----------------'.format(table_group.shape(), table_group.ids))
 
     if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
-        kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
+        ag = kp_anonymity_classic(table_group, k, p, PR_len, max_level, kp_algorithm)
     else:
-        kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
+        ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
     # TODO: call some method to write into the output file
+    save_anonymized_table(ag, sd_dict)
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
-    parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
+    parser.add_argument('-l', '--PR-length', required=False, type=int, default=5)
+    parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=True)
     parser.add_argument('-o', '--output-file', required=False)
@@ -178,6 +166,9 @@ if __name__ == "__main__":
     print("\n-----------------\nkp-anonymity with the following parameters: \nk={} p={}\nPR_len={}\n"
           "max_level={}\nalgo={}\ninput_path={}\noutput_path={}\nverbose={}\n-----------------".format(
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    if max_level > 19:
+        print("ERROR: maximum supported PR level is 19 (saxpy library limitation)")
+        exit()
     if k < p:
         print("ERROR: k must be larger than P")
         exit()
@@ -186,7 +177,8 @@ if __name__ == "__main__":
     verbose("Verbose output enabled")
     debug("Debug output enabled")
 
-    do_kp_anonymity(path_to_file=input_path, k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+    do_kp_anonymity(path_to_file=input_path, output_path=output_path,
+                    k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
 
     end_time = time.time() - start_time
     print("The program ran for: {} seconds".format(end_time))

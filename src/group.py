@@ -5,6 +5,8 @@ import copy
 
 from typing import Union, Tuple, List, Dict
 
+from verbose import debug
+
 
 class Group:
 
@@ -120,10 +122,23 @@ def create_empty_group() -> Group:
     return Group(group_table=None, ids=[], pr_values=[])
 
 
-def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float]]:
-    # TODO: this method must return: (group, dict[str,float])
-    #   - this dictionary has last column of every row, the key - il nome della azienda
+def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float], List[str]]:
+    group_table = df.iloc[:, :-1].to_numpy()
+    col_labels = list(df.columns.values)
+    ids = list(df.index.values)
+    sd = df.iloc[:, -1].tolist()
 
-    ids = list(df.columns)
-    df = df.transpose()
-    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids))
+    debug("cols: " + str(col_labels))
+    debug(len(col_labels))
+    debug("ids: " + str(ids))
+    debug(len(ids))
+    debug("SD:" + str(sd))
+    debug(len(sd))
+    debug("table:\n" + str(group_table))
+    debug(group_table.shape)
+    
+    sd_dict = {}
+    for i, id in enumerate(ids):
+        sd_dict[id] = sd[i]
+
+    return Group(group_table=group_table, ids=ids, pr_values=[("no_pr", 0)]*len(ids)), sd_dict, col_labels
