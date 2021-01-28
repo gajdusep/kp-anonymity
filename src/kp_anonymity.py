@@ -125,8 +125,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
-    parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
+    parser.add_argument('-l', '--PR-length', required=False, type=int, default=5)
+    parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=True)
     parser.add_argument('-o', '--output-file', required=False)
@@ -179,6 +179,9 @@ if __name__ == "__main__":
     print("\n-----------------\nkp-anonymity with the following parameters: \nk={} p={}\nPR_len={}\n"
           "max_level={}\nalgo={}\ninput_path={}\noutput_path={}\nverbose={}\n-----------------".format(
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    if max_level > 19:
+        print("ERROR: maximum supported PR level is 19 (saxpy library limitation)")
+        exit()
     if k < p:
         print("ERROR: k must be larger than P")
         exit()

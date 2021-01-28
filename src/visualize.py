@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -53,14 +54,25 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     pr_cmap = get_cmap(len(pr_dict) + 1)
 
     n = len(nodes_list[0].table[0])
+    draw_markers = False
+    line_alpha = 1
+    if nodes_list[0].pr_len() != n:
+        paa_linespace = np.linspace(0, n-1, (2 * nodes_list[0].pr_len() + 1))
+        paa_positions = paa_linespace[1::2]
+        draw_markers = True
+        line_alpha = 0.3
     for node in nodes_list:
         if node.pr != "a" * node.pr_len():
             node_color = pr_cmap(pr_dict[node.pr])
+            marker_alpha = 1
         else:
             node_color = "grey"
+            marker_alpha = 0.5
         for row in node.table:
-            #plt.plot(range(n), row, color=node_color, label=node.pr)
-            plt.plot(paa(row, node.pr_len()), color=node_color, label=node.pr, ls="-")
+            plt.plot(range(n), row, color=node_color, label=node.pr, alpha=line_alpha)
+            if draw_markers:
+                plt.plot(paa_positions, paa(row, node.pr_len()), color=node_color, label="", linestyle='', marker="_", markeredgewidth=2, markersize=10, alpha=marker_alpha)
+                plt.plot(paa_positions, paa(row, node.pr_len()), color=node_color, label="", linestyle=':', alpha=0.5)
     
     fontP = FontProperties()
     fontP.set_size('xx-small')
