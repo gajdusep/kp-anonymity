@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import copy
 
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 
 class Group:
 
@@ -26,7 +26,7 @@ class Group:
             self.pr_values.pop()
             self.group_table = np.delete(self.group_table, -1, axis=0)
 
-    def pop_row(self, index) -> Union[Tuple[np.ndarray, str, str], None]:
+    def pop_row(self, index) -> Union[Tuple[np.ndarray, str, Tuple[str, int]], None]:
         if self.size() > 0:
             popped_id = self.ids.pop(index)
             popped_pr_value = self.pr_values.pop(index)
@@ -66,7 +66,7 @@ class Group:
     def get_row_id_at_index(self, index: int) -> str:
         return self.ids[index]
 
-    def get_pr_value_at_index(self, index: int) -> str:
+    def get_pr_value_at_index(self, index: int) -> Tuple[str, int]:
         return self.pr_values[index]
 
     def get_all_attrs_at_index(self, index: int) -> Tuple[np.ndarray, str, Tuple[str, int]]:
@@ -119,7 +119,13 @@ def create_empty_group() -> Group:
     return Group(group_table=None, ids=[], pr_values=[])
 
 
-def create_group_from_pandas_df(df: pd.DataFrame) -> Group:
+def create_group_from_pandas_df(df: pd.DataFrame) -> Tuple[Group, Dict[str, float]]:
     ids = list(df.columns)
     df = df.transpose()
-    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids))
+    sd = df.iloc[:,-1].tolist()
+
+    sd_dict = {}
+    for i, id in enumerate(ids):
+        sd_dict[id] = sd[i]
+
+    return Group(group_table=df.values, ids=ids, pr_values=[("no_pr", 0)]*len(ids)), sd_dict
