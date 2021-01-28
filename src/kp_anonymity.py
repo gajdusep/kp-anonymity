@@ -11,34 +11,20 @@ from node import Node
 from k_anonymity import k_anonymity_top_down, kapra_group_formation, k_anonymity_bottom_up
 from p_anonymity import p_anonymity_naive, p_anonymity_kapra
 from verbose import *
-import matplotlib.pyplot as plt
-
-
-# TODO: write the result to the file:
-#   - finish the QI and SD
-#   - output file
-# TODO: download data from this page: https://archive.ics.uci.edu/ml/machine-learning-databases/00432/Data/
-#   - try to run performance_tests
-# TODO:
-#   - finish input_file, output_file
-# TODO:
-#   - metrics
-
-# TODO: presentation
-#   - graphs (anonymization envelopes, pr-values)
-#   - time spent in algorithms (also graphs?)
 
 
 class KPAlgorithm(str, Enum):
-    TOPDOWN = 'top-down'
-    BOTTOMUP = 'bottom-up'
-    KAPRA = 'kapra'
+    TOPDOWN = 'Top-Down'
+    BOTTOMUP = 'Bottom-Up'
+    KAPRA = 'KAPRA'
 
 
 show_plots = False
 
 
-def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str) -> List[Group]:
+def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_level: int,
+                         kp_algorithm: str) -> List[Group]:
+
     if kp_algorithm == KPAlgorithm.TOPDOWN:
         anonymized_groups = k_anonymity_top_down(table_group, k)
     else:  # kp_algorithm == KPAlgorithm.BOTTOMUP - no other option should get here
@@ -99,7 +85,8 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
     return final_group_list
 
 
-def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: int, kp_algorithm: str):
+def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len: int, max_level: int,
+                    kp_algorithm: str):
     df = load_data_from_file(path_to_file)
 
     # visualize_all_companies(df)
@@ -125,8 +112,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-k', '--k-anonymity', required=True, type=int)
     parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-l', '--PR-length', required=False, type=int, default=4)
-    parser.add_argument('-m', '--max-level', required=False, type=int, default=3)
+    parser.add_argument('-l', '--PR-length', required=False, type=int, default=5)
+    parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=True)
     parser.add_argument('-o', '--output-file', required=False)
@@ -179,15 +166,19 @@ if __name__ == "__main__":
     print("\n-----------------\nkp-anonymity with the following parameters: \nk={} p={}\nPR_len={}\n"
           "max_level={}\nalgo={}\ninput_path={}\noutput_path={}\nverbose={}\n-----------------".format(
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
+    if max_level > 19:
+        print("ERROR: maximum supported PR level is 19 (saxpy library limitation)")
+        exit()
     if k < p:
-        print("ERROR: k must be larger than P")
+        print("ERROR: k cannot be smaller than P")
         exit()
     if k < 2 * p:
         print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")
     debug("Debug output enabled")
 
-    do_kp_anonymity(path_to_file=input_path, k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
+    do_kp_anonymity(path_to_file=input_path, output_path=output_path,
+                    k=k, p=p, PR_len=PR_len, max_level=max_level, kp_algorithm=algo)
 
     end_time = time.time() - start_time
     print("The program ran for: {} seconds".format(end_time))

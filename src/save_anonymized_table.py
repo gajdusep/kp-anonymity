@@ -25,5 +25,8 @@ def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float], col_labels:
     col_labels.append('SD')
     df.to_csv('data/anonymized_table.csv', index = False, header = col_labels, quotechar=' ')       
         
-    
+
+
+
+    print(anonymized_table)
 
