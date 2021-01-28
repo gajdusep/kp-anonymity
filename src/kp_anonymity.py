@@ -4,6 +4,7 @@ from enum import Enum
 from typing import List, Dict
 
 from load_data import *
+from save_anonymized_table import save_anonymized_table
 from visualize import visualize_envelopes, visualize_p_anonymized_nodes, visualize_all_companies
 from group import Group, create_group_from_pandas_df
 from node import Node
@@ -117,6 +118,7 @@ def do_kp_anonymity(path_to_file: str, k: int, p: int, PR_len: int, max_level: i
         ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
     # TODO: call some method to write into the output file
+    save_anonymized_table(ag, sd_dict)
 
 
 def parse_arguments():
