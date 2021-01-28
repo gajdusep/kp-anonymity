@@ -17,6 +17,11 @@ Data Protection and Privacy - final project, (k,P)-anonymity
 Examples of how to run the program:
 
 
+,,pr_value,2012-12-28,2013-02-15
+1,(100,130),(100,400)
+2,(100,130),(100,200)
+3,(100,130),(100,500)
+
 
 ```shell
 pip3 install -r requirements.txt
