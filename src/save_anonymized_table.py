@@ -4,6 +4,8 @@ from typing import List, Dict
 
 def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float]):
     anonymized_table = []
+    first_tuple = np.array()
+    anonymized_table.append(first_tuple)
     for group in ag:
         group_intervals = group.get_group_intervals()
         for i in range(group.size()):
