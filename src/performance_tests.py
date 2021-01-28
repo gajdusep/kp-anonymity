@@ -129,7 +129,7 @@ def run_all_tests(path: str):
                 time_e = time.time() - time_s
                 ivl_results[a][k][p] = instant_value_loss(anonymized)
                 pl_results[a][k][p] = pattern_loss(anonymized)
-                times[a][k][p] = round(time_e, 2)
+                times[a][k][p] = time_e
 
                 # topdown_time_s = time.time()
                 # anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
@@ -153,7 +153,7 @@ def run_all_tests(path: str):
     for a in algorithms:
         print('\n----------- {} -----------'.format(a))
         print(pl_results[a])
-    print('\n----------- Times -----------')
+    print('\n----------- Times (in seconds) -----------')
     for a in algorithms:
         print('\n----------- {} -----------'.format(a))
         print(times[a])
@@ -205,7 +205,7 @@ def run_all_tests(path: str):
     
     for a in algorithms:
         labels = ["p = {}".format(l) for l in times[a].index]
-        visualize_performance(times[a], "{} Algorithm Execution Time".format(a), x="k", labels=labels)
+        visualize_performance(times[a], "{} Algorithm Execution Time (in seconds)".format(a), x="k", labels=labels, colormap="winter")
     
     return
     

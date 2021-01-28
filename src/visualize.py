@@ -94,17 +94,17 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.show()
     return
 
-def visualize_performance(values: pd.DataFrame, title: str = "", x: str = "", y: str = "", labels = None) -> None:
+def visualize_performance(values: pd.DataFrame, title: str = "", x: str = "", y: str = "", labels = None, colormap = "hsv") -> None:
     if labels == None:
         labels = values.index
-    cmap = get_cmap(len(values.index) + 1)
+    cmap = get_cmap(len(values.index) + 1, colormap)
     for label, row in values.iterrows():
         i = values.index.get_loc(label)
         color = cmap(i)
         plt.plot(row, color=color, label=labels[i], marker="o", linestyle="-")
     fontP = FontProperties()
     fontP.set_size('xx-small')
-    plt.legend(loc = 'upper left', ncol = 3, prop = fontP)
+    plt.legend(loc = 'upper left', prop = fontP)
     plt.title(title)
     plt.xlabel(x)
     plt.ylabel(y)

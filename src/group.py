@@ -94,7 +94,7 @@ class Group:
         return table_maxs - table_mins
 
     def instant_value_loss(self) -> float:
-        return np.sqrt(np.sum(self.get_min_max_diff()) / self.shape()[1])
+        return np.sqrt(np.sum(np.square(self.get_min_max_diff())) / self.shape()[1]) * self.shape()[0]
 
     def get_group_intervals(self):
         table_maxs = self.get_maxes()
