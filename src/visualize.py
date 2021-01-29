@@ -14,7 +14,7 @@ def visualize_all_companies(dataframe: pd.DataFrame):
     dataframe.plot()
     fontP = FontProperties()
     fontP.set_size('xx-small')
-    
+    plt.yscale("log")
     plt.legend(loc='upper left', ncol=3, prop=fontP)
     return
 
@@ -23,7 +23,7 @@ def get_cmap(n, name='hsv'):
     return plt.cm.get_cmap(name, n)
 
 
-def visualize_envelopes(group_list: List[Group]):
+def visualize_envelopes(group_list: List[Group], algorithm_str: str):
     # https://stackoverflow.com/questions/50161140/how-to-plot-a-time-series-array-with-confidence-intervals-displayed-in-python
     # https://stackoverflow.com/questions/14720331/how-to-generate-random-colors-in-matplotlib
 
@@ -34,7 +34,7 @@ def visualize_envelopes(group_list: List[Group]):
         for i in range(group.size()):
             plt.plot(range(n), group.get_row_at_index(i), color=color)
         plt.fill_between(range(group.shape()[1]), group.get_maxes(), group.get_mins(), alpha=0.1, color=color)
-    plt.title("k-group envelopes")
+    plt.title("k-group envelopes ({})".format(algorithm_str))
     plt.yscale("symlog")
     plt.show()
     return
@@ -94,8 +94,9 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.show()
     return
 
-def visualize_performance(values: pd.DataFrame, title: str = "", x: str = "", y: str = "", labels = None, colormap = "hsv") -> None:
-    if labels == None:
+
+def visualize_performance(values: pd.DataFrame, title: str = "", x: str= "", y: str = "", labels=None, colormap="hsv"):
+    if labels is None:
         labels = values.index
     cmap = get_cmap(len(values.index) + 1, colormap)
     for label, row in values.iterrows():

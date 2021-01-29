@@ -2,6 +2,7 @@ import time
 import argparse
 from enum import Enum
 from typing import List, Dict
+import matplotlib.pyplot as plt
 
 from load_data import *
 from save_anonymized_table import save_anonymized_table
@@ -35,7 +36,7 @@ def kp_anonymity_classic(table_group: Group, k: int, p: int, PR_len: int, max_le
         verbose('   -- shape:' + str(ag.shape()) + str('; company codes:') + str(ag.ids))
     
     if show_plots:
-        visualize_envelopes(anonymized_groups)
+        visualize_envelopes(anonymized_groups, kp_algorithm)
 
     final_nodes: Dict[Group, List[Node]] = {}
     for ag in anonymized_groups:
@@ -80,7 +81,7 @@ def kp_anonymity_kapra(table_group: Group, k: int, p: int, PR_len: int, max_leve
         verbose('  {}, {}'.format(ag.ids, ag.pr_values))
 
     if show_plots:
-        visualize_envelopes(final_group_list)
+        visualize_envelopes(final_group_list, "Kapra")
 
     return final_group_list
 
@@ -89,8 +90,8 @@ def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len:
                     kp_algorithm: str):
     df = load_data_from_file(path_to_file)
 
-    # visualize_all_companies(df)
-    # df = remove_outliers(df, max_stock_value=5000)
+    # visualize_all_companies(df.transpose())
+    # plt.show()
     # visualize_all_companies(df)
 
     # UNCOMMENT IF YOU WANT TO SEE THE GRAPHS
@@ -104,8 +105,7 @@ def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len:
     else:
         ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
-    # TODO: call some method to write into the output file
-    save_anonymized_table(ag, sd_dict, col_labels)
+    save_anonymized_table(output_path, ag, sd_dict, col_labels)
 
 
 def parse_arguments():
@@ -116,7 +116,7 @@ def parse_arguments():
     parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=True)
-    parser.add_argument('-o', '--output-file', required=False)
+    parser.add_argument('-o', '--output-file', required=True)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
     parser.add_argument('-d', '--debug', required=False, action='store_true')

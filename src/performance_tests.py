@@ -115,7 +115,7 @@ def run_all_tests(path: str):
                     pl_results[a][k][p] = float("NaN")
                     times[a][k][p] = float("NaN")
                     continue
-                save_anonymized_table(anonymized, sd_dict, col_labels, k, p, a)
+                save_anonymized_table("data/anonymized_{}-{}_{}".format(k, p, a), anonymized, sd_dict, col_labels)
                 time_e = time.time() - time_s
                 ivl_results[a][k][p] = instant_value_loss(anonymized)
                 pl_results[a][k][p] = pattern_loss(anonymized)
@@ -184,6 +184,7 @@ def run_all_tests(path: str):
         visualize_performance(times[a], "{} Algorithm Execution Time (in seconds)".format(a), x="k", labels=labels, colormap="winter")
     
     return
-    
+
+
 if __name__ == "__main__":
     run_all_tests(sys.argv[1])
