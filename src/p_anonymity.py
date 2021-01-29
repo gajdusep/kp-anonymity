@@ -5,40 +5,11 @@ from node import Node, create_node_from_group, merge_child_nodes, SAX
 from verbose import verbose, debug
 
 
-# def compute_pattern_similarity_old(n1: Node, n2: Node) -> float:
-#     """
-#     Calculate the similarity between two pattern representations as a value between 0 and 1.
-#     The difference is here defined as the average of the normalized distances (normalized over the number of levels)
-#     between the two characters in the same position of the two PRs.
-#     The similarity is 1 - difference.
-#     """
-#     debug('Computing similarity of patterns "{}" (node {}, level {}) and "{}" (node {}, level {})'.format(n1.pr, n1.id, n1.level, n2.pr, n2.level, n2.id))
-#     if n1.pr_len() != n2.pr_len():
-#         raise ValueError("Pattern similarity cannot be computed on PR of different lengths")
-    
-#     diff = 0
-#     if n1.level == 1 or n2.level == 1:
-#         if n1.level == n2.level:
-#             return 1
-#         else:
-#             return 0
-#     elif n1.level == n2.level:
-#         for i in range(len(n1.pr)):
-#             diff += abs(ord(n1.pr[i]) - ord(n2.pr[i])) / (n1.level - 1)
-#     else:
-#         # If the two PRs are of different levels, their values are normalized separately
-#         for i in range(len(n1.pr)):
-#             diff += abs((ord(n1.pr[i]) - 97) / (n1.level - 1) - (ord(n2.pr[i]) - 97) / (n2.level - 1))
-    
-#     diff = diff / len(n1.pr)
-#     sim = 1 - diff
-#     debug("Computed similarity: {}".format(sim))
-#     return sim
-
 def distance(a: np.ndarray, b: np.ndarray) -> float:
     if len(a) != len(b):
         raise ValueError("Arrays must have the same length")
     return sum(abs(a[i] - b[i]) for i in range(len(a)))
+
 
 def pattern_representation_to_numpy_array(pr: str, l: int) -> np.ndarray:
     if l == 1:
@@ -46,6 +17,7 @@ def pattern_representation_to_numpy_array(pr: str, l: int) -> np.ndarray:
     else:
         arr = np.array([ord(c) - 97 for c in pr])/(l - 1)
     return arr
+
 
 def compute_pattern_similarity(pr1: str, pr2: str, l1: int, l2: int) -> float:
     """
@@ -59,6 +31,7 @@ def compute_pattern_similarity(pr1: str, pr2: str, l1: int, l2: int) -> float:
     arr1 = pattern_representation_to_numpy_array(pr1, l1)
     arr2 = pattern_representation_to_numpy_array(pr2, l2)
     return -distance(arr1, arr2)
+
 
 def create_p_anonymity_tree(group: Group, p: int, max_level: int, pr_len: int) -> Dict[str, List[Node]]:
     """

@@ -3,9 +3,9 @@ from pandas.core.frame import DataFrame
 from group import Group
 from typing import List, Dict
 import pandas as pd
-import csv 
+import csv
 
-def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float], col_labels: List[str]):
+def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float], col_labels: List[str], k: int = None, p: int = None, algo: str = None):
     anonymized_table = []
     id = 1
     for group in ag:
@@ -23,10 +23,6 @@ def save_anonymized_table(ag: List[Group], sd_dict: Dict[str,float], col_labels:
     col_labels.pop()
     col_labels.append('Pr_value')
     col_labels.append('SD')
-    df.to_csv('data/anonymized_table.csv', index = False, header = col_labels, quotechar=' ')       
-        
+    df.to_csv('data/anonymized_table_{}_{}_{}.csv'.format(k, p, algo), index = False, header = col_labels, quotechar=' ')
 
-
-
-    print(anonymized_table)
-
+    # print(anonymized_table)

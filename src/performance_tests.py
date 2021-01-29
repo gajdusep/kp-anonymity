@@ -16,6 +16,7 @@ from load_data import *
 from p_anonymity import distance
 from verbose import setverbose, setdebug
 from visualize import visualize_performance
+from save_anonymized_table import save_anonymized_table
 
 
 def instant_value_loss(groups: List[Group]):
@@ -56,32 +57,28 @@ def table_pattern_loss(table: np.ndarray, pr_list: List[Tuple[str, int]]):
 def pattern_loss(groups: List[Group]):
     return sum(table_pattern_loss(group.group_table, group.pr_values) for group in groups)
 
-# def table_pattern_diff(table: np.ndarray, pr_list: List[Tuple[str, int]], max_level: int):
-#     pattern_diff = 0
-#     for i, row in enumerate(table):
-#         pr = SAX(row, max_level, pr_list[i])
-#         pattern_diff += 1 - compute_pattern_similarity(pr, pr_list[i])
-#     return pattern_diff
-
 
 def run_all_tests(path: str):
 
     # k_values = list(range(4,5))
     # p_values = list(range(2,3))
 
-    k_values = list(range(4,11))
-    p_values = list(range(2,6))
+    # k_values = list(range(4,11))
+    # p_values = list(range(2,6))
+
+    k_values = [4, 5, 7, 10, 15, 22, 35, 50]
+    p_values = [2, 3, 4, 6, 8, 10]
 
     k_values.sort()
     p_values.sort()
     pr_len = 5
-    max_level = 5
+    max_level = 7
 
     df = load_data_from_file(path)
 
     df = remove_outliers(df, max_stock_value=5000)
 
-    group = create_group_from_pandas_df(df)[0]
+    group, sd_dict, col_labels = create_group_from_pandas_df(df)
 
     algorithms = [KPAlgorithm.KAPRA, KPAlgorithm.TOPDOWN, KPAlgorithm.BOTTOMUP]
     ivl_results: Dict[KPAlgorithm, pd.DataFrame] = {}
@@ -91,14 +88,6 @@ def run_all_tests(path: str):
         ivl_results[a] = pd.DataFrame(columns=k_values, index=p_values)
         pl_results[a] = pd.DataFrame(columns=k_values, index=p_values)
         times[a] = pd.DataFrame(columns=k_values, index=p_values)
-    
-    # kapra_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # topdown_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # bottomup_ivl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # kapra_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # topdown_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # bottomup_pl_result_dataframe = pd.DataFrame(columns=k_values, index=p_values)
-    # times = pd.DataFrame(columns=k_values, index=p_values)
 
     # setverose()
     # setdebug()
@@ -126,24 +115,11 @@ def run_all_tests(path: str):
                     pl_results[a][k][p] = float("NaN")
                     times[a][k][p] = float("NaN")
                     continue
+                save_anonymized_table(anonymized, sd_dict, col_labels, k, p, a)
                 time_e = time.time() - time_s
                 ivl_results[a][k][p] = instant_value_loss(anonymized)
                 pl_results[a][k][p] = pattern_loss(anonymized)
                 times[a][k][p] = time_e
-
-                # topdown_time_s = time.time()
-                # anonymized_topdown = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.TOPDOWN)
-                # topdown_time_e = time.time() - topdown_time_s
-                # topdown_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_topdown)
-                # topdown_pl_result_dataframe[k][p] = pattern_loss(anonymized_topdown)
-
-                # bottomup_time_s = time.time()
-                # anonymized_bottomup = kp_anonymity_classic(group, k, p, pr_len, max_level, KPAlgorithm.BOTTOMUP)
-                # bottomup_time_e = time.time() - bottomup_time_s
-                # bottomup_ivl_result_dataframe[k][p] = instant_value_loss(anonymized_bottomup)
-                # bottomup_pl_result_dataframe[k][p] = pattern_loss(anonymized_bottomup)
-
-                # times[k][p] = (round(kapra_time_e, 2), round(topdown_time_e, 2), round(bottomup_time_e, 2))
     
     print('\n----------- Instant Value Loss -----------')
     for a in algorithms:
