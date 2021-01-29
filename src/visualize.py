@@ -94,8 +94,9 @@ def visualize_p_anonymized_nodes(nodes_list: List[Node]):
     plt.show()
     return
 
-def visualize_performance(values: pd.DataFrame, title: str = "", x: str = "", y: str = "", labels = None, colormap = "hsv") -> None:
-    if labels == None:
+
+def visualize_performance(values: pd.DataFrame, title: str = "", x: str= "", y: str = "", labels=None, colormap="hsv"):
+    if labels is None:
         labels = values.index
     cmap = get_cmap(len(values.index) + 1, colormap)
     for label, row in values.iterrows():

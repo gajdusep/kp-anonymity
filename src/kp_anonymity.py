@@ -104,8 +104,7 @@ def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len:
     else:
         ag = kp_anonymity_kapra(table_group, k, p, PR_len, max_level)
 
-    # TODO: call some method to write into the output file
-    save_anonymized_table(ag, sd_dict, col_labels)
+    save_anonymized_table(output_path, ag, sd_dict, col_labels)
 
 
 def parse_arguments():
@@ -116,7 +115,7 @@ def parse_arguments():
     parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
     parser.add_argument('-s', '--show-plots', required=False, action='store_true')
     parser.add_argument('-i', '--input-file', required=True)
-    parser.add_argument('-o', '--output-file', required=False)
+    parser.add_argument('-o', '--output-file', required=True)
     parser.add_argument('-a', '--algorithm', required=False, default='top-down')
     parser.add_argument('-v', '--verbose', required=False, action='store_true')
     parser.add_argument('-d', '--debug', required=False, action='store_true')
