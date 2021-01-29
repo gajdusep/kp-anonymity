@@ -60,13 +60,13 @@ def pattern_loss(groups: List[Group]):
 
 def run_all_tests(path: str):
 
-    # k_values = list(range(4,5))
-    # p_values = list(range(2,3))
+    # k_values = list(range(4,7))
+    # p_values = list(range(2,4))
 
     # k_values = list(range(4,11))
     # p_values = list(range(2,6))
 
-    k_values = [4, 5, 7, 10, 15, 22, 35, 50]
+    k_values = [4, 5, 7, 10, 16, 24, 35, 50]
     p_values = [2, 3, 4, 6, 8, 10]
 
     k_values.sort()
@@ -115,7 +115,7 @@ def run_all_tests(path: str):
                     pl_results[a][k][p] = float("NaN")
                     times[a][k][p] = float("NaN")
                     continue
-                save_anonymized_table("data/anonymized_{}-{}_{}".format(k, p, a), anonymized, sd_dict, col_labels)
+                save_anonymized_table("data/anonymized/anonymized_{}-{}_{}.csv".format(k, p, a), anonymized, sd_dict, col_labels)
                 time_e = time.time() - time_s
                 ivl_results[a][k][p] = instant_value_loss(anonymized)
                 pl_results[a][k][p] = pattern_loss(anonymized)
@@ -141,14 +141,26 @@ def run_all_tests(path: str):
     times_k_a = pd.DataFrame(columns=k_values, index=algorithms)
     times_p_a = pd.DataFrame(columns=p_values, index=algorithms)
     
+    # P and k values for plots
     # Choose the largest p value that is not greater than any k if it exists,
     # choose smallest p value otherwise
     set_p = p_values[0]
     for p in reversed(p_values):
         if p <= k_values[0]:
             set_p = p
-    # Choose the largest k value for plots
-    set_k = k_values[-1]
+            break
+    # Choose the largest k value among those that are smaller than any 2*p if it exists,
+    # choose smallest k value otherwise
+    set_k = k_values[0]
+    for k in k_values:
+        if k >= 2 * p_values[-1]:
+            break
+        set_k = k
+
+
+    # Manually set k and p (comment to autoselect)
+    set_k = 16
+    set_p = 4
 
     for a in algorithms:
         for k in k_values:
