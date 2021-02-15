@@ -1,3 +1,4 @@
+import sys
 import time
 import argparse
 from enum import Enum
@@ -98,6 +99,9 @@ def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len:
     # plt.show()
 
     table_group, sd_dict, col_labels = create_group_from_pandas_df(df)
+    if len(table_group.ids) != len(set(table_group.ids)):
+        print("ERROR: Duplicate IDs detected in the table, exiting...")
+        exit(1)
     print('Table created: {} {}\n-----------------'.format(table_group.shape(), table_group.ids))
 
     if kp_algorithm == KPAlgorithm.TOPDOWN or kp_algorithm == KPAlgorithm.BOTTOMUP:
@@ -109,17 +113,23 @@ def do_kp_anonymity(path_to_file: str, output_path: str, k: int, p: int, PR_len:
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-k', '--k-anonymity', required=True, type=int)
-    parser.add_argument('-p', '--p-anonymity', required=True, type=int)
-    parser.add_argument('-l', '--PR-length', required=False, type=int, default=5)
-    parser.add_argument('-m', '--max-level', required=False, type=int, default=5)
-    parser.add_argument('-s', '--show-plots', required=False, action='store_true')
-    parser.add_argument('-i', '--input-file', required=True)
-    parser.add_argument('-o', '--output-file', required=True)
-    parser.add_argument('-a', '--algorithm', required=False, default='top-down')
-    parser.add_argument('-v', '--verbose', required=False, action='store_true')
-    parser.add_argument('-d', '--debug', required=False, action='store_true')
+    parser = argparse.ArgumentParser(description='(k,P)-anonymize time series data')
+    parser.add_argument('-i', '--input-file', help='Input file path', required=True)
+    parser.add_argument('-o', '--output-file', help='Output file path', required=True)
+    parser.add_argument('-k', '--k-anonymity', help='k value', required=True, type=int)
+    parser.add_argument('-p', '--p-anonymity', help='P value', required=True, type=int)
+    parser.add_argument('-l', '--PR-length', help='Pattern representation (PR) length (uses Piecewise Aggregate Approximation), set to 0 for same length as row length', required=False, type=int, default=5)
+    parser.add_argument('-m', '--max-level', help='Maximum PR level', required=False, type=int, default=5)
+    parser.add_argument('-s', '--show-plots', help='Display k-anonymization and P-anonymization result plots', required=False, action='store_true')
+    parser.add_argument('-a', '--algorithm', help='Choose algorithm; possible values: "top-down", "bottom-up", "kapra"', required=False, default='top-down')
+    parser.add_argument('-v', '--verbose', help='Enable verbose output', required=False, action='store_true')
+    parser.add_argument('-d', '--debug', help='Enable debug output (includes verbose)', required=False, action='store_true')
+    
+    if len(sys.argv)==1:
+        print('Please refer to the following usage info or use parameter "-h" for detailed help.')
+        parser.print_usage()
+        exit(1)
+    
     args = vars(parser.parse_args())
 
     k = args['k_anonymity']
@@ -168,10 +178,10 @@ if __name__ == "__main__":
         k, p, PR_len, max_level, algo.value, input_path, output_path, getverbose()))
     if max_level > 19:
         print("ERROR: maximum supported PR level is 19 (saxpy library limitation)")
-        exit()
+        exit(1)
     if k < p:
         print("ERROR: k cannot be smaller than P")
-        exit()
+        exit(1)
     if k < 2 * p:
         print("WARNING: k should be at least 2*P in order to obtain meaningful results")
     verbose("Verbose output enabled")

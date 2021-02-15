@@ -19,7 +19,7 @@ def save_anonymized_table(output_path: str, ag: List[Group], sd_dict: Dict[str, 
 
     df = pd.DataFrame(anonymized_table)
     col_labels_copy = col_labels.copy()
-    col_labels_copy.insert(0, 'Time')
+    col_labels_copy.insert(0, 'ID')
     SD_time = col_labels_copy.pop()
     col_labels_copy.append('Pr_value')
     col_labels_copy.append(SD_time)
